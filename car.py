@@ -13,8 +13,8 @@ class Car(object):
         self.force = 0
         self.position = np.array(position)
         self.velocity = np.array([0.0, 0.0])
-        self.steer = np.array([0.0, 0.0])
-        self.mass = 1
+        self.steer = 0
+        self.mass = 10
         self.direction = 1
 
         image = pyglet.resource.image(image+'.png')
@@ -45,14 +45,22 @@ class Car(object):
         elif down:
             self.force = -1000
         if left:
-            self.steer += self.rotate
+            if self.steer < 25:
+                self.steer += 1
         elif right:
-            self.steer -= self.rotate
+            if self.steer > -25:
+                self.steer -= 1
+        else:
+            if self.steer > 0:
+                self.steer -= 1
+            elif self.steer < 0:
+                self.steer += 1
+
 
 
     def update(self, dt):
         self.force = 0
-        self.steer = 0
+        #self.steer = 0
         self.get_player_input()
         physics.move(self)
         self.sprite.x = self.position[0]
