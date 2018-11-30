@@ -2,14 +2,15 @@ import pyglet
 from pyglet.window import key
 import numpy as np
 import physics
+from physics import dt
 import math
 
 
 class Car(object):
-    def __init__(self, handler, position=[50, 100],rotation=0, player=1,image = 'car'):
+    def __init__(self, handler, position=[50, 100],rotation=0, player=1, image='car', width=22):
         self.key_handler = handler
         self.player = player
-        self.rotate = 25
+        self.rotate = 20
         self.force = 0
         self.position = np.array(position)
         self.velocity = np.array([0.0, 0.0])
@@ -22,10 +23,11 @@ class Car(object):
         car_sprite.image.anchor_x = car_sprite.image.width / 2
         car_sprite.image.anchor_y = car_sprite.image.height / 2
         car_sprite.rotation = rotation
-        car_sprite.scale = 1
+        car_sprite.scale = width/car_sprite.width
 
         self.sprite = car_sprite
         self.rotation = self.sprite.rotation
+        print(self.sprite.width,self.sprite.height)
         self.length = self.sprite.width
 
 
@@ -45,16 +47,16 @@ class Car(object):
         elif down:
             self.force = -1000
         if left:
-            if self.steer < 25:
-                self.steer += 1
+            if self.steer < self.rotate:
+                self.steer += 100 * dt
         elif right:
-            if self.steer > -25:
-                self.steer -= 1
+            if self.steer > -self.rotate:
+                self.steer -= 100 * dt
         else:
             if self.steer > 0:
-                self.steer -= 1
+                self.steer -= 100 * dt
             elif self.steer < 0:
-                self.steer += 1
+                self.steer += 100 * dt
 
 
 

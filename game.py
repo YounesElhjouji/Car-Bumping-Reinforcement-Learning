@@ -13,7 +13,7 @@ gl.glClearColor(1, 1, 1, 1)
 key_handler = pyglet.window.key.KeyStateHandler()
 window.push_handlers(key_handler)
 cars = []
-cars.append(car.Car(handler=key_handler))
+cars.append(car.Car(handler=key_handler, image='car1'))
 
 
 
