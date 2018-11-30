@@ -4,28 +4,28 @@ import numpy as np
 dt = 0.01
 
 
-def move(object):
+def move(thing):
 
-    if object.steer != 0:
-        get_rotation(object)
+    if thing.steer != 0:
+        get_rotation(thing)
 
-    force = get_xy(object.force, object.rotation)
-    get_displacement(object, force)
+    force = get_xy(thing.force, thing.rotation, 1)
+    get_displacement(thing, force)
 
 
 
-def get_rotation(object):
-    speed = np.linalg.norm(object.velocity)
-    turning_radius = object.length / tan(np.radians(object.steer))
+def get_rotation(thing):
+    speed = np.linalg.norm(thing.velocity)
+    turning_radius = thing.length / tan(np.radians(thing.steer))
     angular_velocity = speed / turning_radius
-    object.rotation += np.degrees(angular_velocity) * dt
-    object.rotation = object.rotation % 360
-    object.velocity = get_xy(speed, object.rotation)
+    thing.rotation += np.degrees(angular_velocity) * dt
+    thing.rotation = thing.rotation % 360
+    thing.velocity = get_xy(speed, thing.rotation, thing.direction)
 
-def get_xy(value, rotation):
+def get_xy(value, rotation, direction):
     theta = np.radians(rotation)
-    vector_x = value*cos(theta)
-    vector_y = value*sin(theta)
+    vector_x = value*cos(theta) * direction
+    vector_y = value*sin(theta) * direction
     return np.array([vector_x, vector_y])
 
 
@@ -36,9 +36,24 @@ def check_speed(velocity):
         velocity = velocity/ratio
     return velocity
 
+def get_angle_difference(angleA, angleB):
+    difference = abs((angleA - angleB))
+    if difference > 180:
+        difference = 360-180
+    return difference
 
-def get_displacement(object,force):
-    acceleration = force / object.mass
-    object.velocity = object.velocity + acceleration * dt
-    object.velocity = check_speed(object.velocity)
-    object.position = object.position + object.velocity * dt #+ 0.5 * acceleration * math.pow(dt, 2)
+def get_displacement(thing, force):
+    acceleration = force / thing.mass
+    thing.velocity = thing.velocity + acceleration * dt
+    thing.velocity = check_speed(thing.velocity)
+    velocity_angle = math.degrees(math.atan2(thing.velocity[1],thing.velocity[0]))
+    thing.direction = 1
+    difference = get_angle_difference(velocity_angle % 360,thing.rotation)
+    print(difference)
+    if difference > 90:
+        thing.direction = -1
+    thing.position = thing.position + thing.velocity * dt
+
+
+
+

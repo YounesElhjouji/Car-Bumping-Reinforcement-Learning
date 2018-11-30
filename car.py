@@ -45,7 +45,7 @@ class Car(object):
         if up:
             self.force = 1000
         elif down:
-            self.force = -1000
+            self.force = -600
         if left:
             if self.steer < self.rotate:
                 self.steer += 100 * dt
