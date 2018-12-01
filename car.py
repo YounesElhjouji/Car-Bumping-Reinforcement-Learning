@@ -7,9 +7,9 @@ import math
 
 
 class Car(object):
-    def __init__(self, handler, position=[50, 100],rotation=0, player=1, image='car', width=22):
-        self.turbo_capacity = 10
-        self.turbo_ccoldown = 20
+    def __init__(self, handler, position=[50, 100],rotation=0, player=1, car_sprite=[], fire_sprite = []):
+        self.turbo_capacity = 40
+        self.turbo_ccoldown = 50
         self.turbo_fuel = self.turbo_capacity
         self.key_handler = handler
         self.player = player
@@ -23,31 +23,33 @@ class Car(object):
         self.mass = 10
         self.friction = self.mass * 9.81 * friction_coefficient
         self.direction = 1
-
-        image = pyglet.resource.image(image+'.png')
-        car_sprite = pyglet.sprite.Sprite(image, self.position[0], self.position[1])
-        car_sprite.image.anchor_x = car_sprite.image.width / 2
-        #car_sprite.image.anchor_y = car_sprite.image.height / 2
-        car_sprite.rotation = rotation
-        car_sprite.scale = width/car_sprite.width
-
+        self.fire = fire_sprite
         self.sprite = car_sprite
-        self.rotation = self.sprite.rotation
-        print(self.sprite.width,self.sprite.height)
         self.length = self.sprite.width
+        self.sprite.x = self.position[0]
+        self.sprite.y = self.position[1]
+        self.sprite.rotation = rotation
+        self.rotation = self.sprite.rotation
 
 
     def update(self, dt):
         physics.t += 1
         if physics.t % self.turbo_ccoldown == 0 and self.turbo_fuel < self.turbo_capacity:
-            print(self.turbo_fuel)
-            self.turbo_fuel += 1
+            self.turbo_fuel += 8
         self.thrust = 0
+        self.fire.visible = False
         self.get_player_input()
         physics.move(self)
         self.sprite.x = self.position[0]
         self.sprite.y = self.position[1]
+        self.set_fire_position()
         self.sprite.rotation = -self.rotation
+
+
+    def set_fire_position(self):
+        self.fire.rotation = self.sprite.rotation
+        self.fire.x = self.sprite.x - (self.sprite.width * 1.12) * np.cos(np.radians(self.rotation))
+        self.fire.y = self.sprite.y - (self.sprite.width * 1.12) * np.sin(np.radians(self.rotation))
 
     def get_player_input(self):
         if self.player == 1:
@@ -65,7 +67,7 @@ class Car(object):
         elif down:
             self.thrust = -800
         if self.key_handler[key.LSHIFT] and self.turbo_fuel > 0:
-            print('Vroom!')
+            self.fire.visible = True
             self.turbo_fuel -= 1
             self.thrust += 10000
         if left and self.steer < self.max_steer:

@@ -1,13 +1,13 @@
 import math
 from math import cos,sin,tan
 import numpy as np
+
 t = 0
 dt = 0.01
 world_size = (1024, 600)
 drag_coefficient = 0.02
 friction_coefficient = 0.7
 bump_back = 0.8
-
 
 def move(thing):
     thing.speed = np.linalg.norm(thing.velocity)
