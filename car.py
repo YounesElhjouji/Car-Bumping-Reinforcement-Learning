@@ -2,7 +2,7 @@ import pyglet
 from pyglet.window import key
 import numpy as np
 import physics
-from physics import dt
+from physics import dt, friction_coefficient
 import math
 
 
@@ -10,18 +10,21 @@ class Car(object):
     def __init__(self, handler, position=[50, 100],rotation=0, player=1, image='car', width=22):
         self.key_handler = handler
         self.player = player
-        self.rotate = 20
+        self.max_steer = 20
+        self.thrust = 0
         self.force = 0
         self.position = np.array(position)
         self.velocity = np.array([0.0, 0.0])
+        self.speed = 0
         self.steer = 0
         self.mass = 10
+        self.friction = self.mass * 9.81 * friction_coefficient
         self.direction = 1
 
         image = pyglet.resource.image(image+'.png')
         car_sprite = pyglet.sprite.Sprite(image, self.position[0], self.position[1])
         car_sprite.image.anchor_x = car_sprite.image.width / 2
-        car_sprite.image.anchor_y = car_sprite.image.height / 2
+        #car_sprite.image.anchor_y = car_sprite.image.height / 2
         car_sprite.rotation = rotation
         car_sprite.scale = width/car_sprite.width
 
@@ -30,6 +33,14 @@ class Car(object):
         print(self.sprite.width,self.sprite.height)
         self.length = self.sprite.width
 
+
+    def update(self, dt):
+        self.thrust = 0
+        self.get_player_input()
+        physics.move(self)
+        self.sprite.x = self.position[0]
+        self.sprite.y = self.position[1]
+        self.sprite.rotation = -self.rotation
 
     def get_player_input(self):
         if self.player == 1:
@@ -43,33 +54,18 @@ class Car(object):
             left = self.key_handler[key.A]
             right = self.key_handler[key.D]
         if up:
-            self.force = 1000
+            self.thrust = 1300
         elif down:
-            self.force = -600
+            self.thrust = -800
         if left:
-            if self.steer < self.rotate:
+            if self.steer < self.max_steer:
                 self.steer += 100 * dt
         elif right:
-            if self.steer > -self.rotate:
+            if self.steer > -self.max_steer:
                 self.steer -= 100 * dt
         else:
             if self.steer > 0:
                 self.steer -= 100 * dt
             elif self.steer < 0:
                 self.steer += 100 * dt
-
-
-
-    def update(self, dt):
-        self.force = 0
-        #self.steer = 0
-        self.get_player_input()
-        physics.move(self)
-        self.sprite.x = self.position[0]
-        self.sprite.y = self.position[1]
-        #self.rotation += 10
-        self.sprite.rotation = -self.rotation
-
-        #   Prints
-        #print(self.sprite.rotation, " rads ", math.radians(self.sprite.rotation))
 

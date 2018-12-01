@@ -1,6 +1,6 @@
 import pyglet
 from pyglet import gl
-from physics import dt
+from physics import dt, world_size
 import car
 from pyglet.window import Window
 
@@ -8,12 +8,12 @@ from pyglet.window import Window
 pyglet.resource.path = ['./resources']
 pyglet.resource.reindex()
 
-window = Window(1024, 600)
+window = Window(world_size[0],world_size[1])
 gl.glClearColor(1, 1, 1, 1)
 key_handler = pyglet.window.key.KeyStateHandler()
 window.push_handlers(key_handler)
 cars = []
-cars.append(car.Car(handler=key_handler, image='car1'))
+cars.append(car.Car(handler=key_handler, image='car1', width=24))
 
 
 
