@@ -2,12 +2,15 @@ import pyglet
 from pyglet.window import key
 import numpy as np
 import physics
-from physics import dt, friction_coefficient
+from physics import dt, friction_coefficient, t
 import math
 
 
 class Car(object):
     def __init__(self, handler, position=[50, 100],rotation=0, player=1, image='car', width=22):
+        self.turbo_capacity = 10
+        self.turbo_ccoldown = 20
+        self.turbo_fuel = self.turbo_capacity
         self.key_handler = handler
         self.player = player
         self.max_steer = 20
@@ -35,6 +38,10 @@ class Car(object):
 
 
     def update(self, dt):
+        physics.t += 1
+        if physics.t % self.turbo_ccoldown == 0 and self.turbo_fuel < self.turbo_capacity:
+            print(self.turbo_fuel)
+            self.turbo_fuel += 1
         self.thrust = 0
         self.get_player_input()
         physics.move(self)
@@ -57,12 +64,14 @@ class Car(object):
             self.thrust = 1300
         elif down:
             self.thrust = -800
-        if left:
-            if self.steer < self.max_steer:
-                self.steer += 100 * dt
-        elif right:
-            if self.steer > -self.max_steer:
-                self.steer -= 100 * dt
+        if self.key_handler[key.LSHIFT] and self.turbo_fuel > 0:
+            print('Vroom!')
+            self.turbo_fuel -= 1
+            self.thrust += 10000
+        if left and self.steer < self.max_steer:
+            self.steer += 100 * dt
+        elif right and self.steer > -self.max_steer:
+            self.steer -= 100 * dt
         else:
             if self.steer > 0:
                 self.steer -= 100 * dt
