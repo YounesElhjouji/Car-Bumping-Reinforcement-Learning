@@ -2,16 +2,17 @@ import math
 from math import cos,sin,tan
 import numpy as np
 
-t = 0
+current_time = 0
 dt = 0.01
 world_size = (1024, 600)
 drag_coefficient = 0.02
 friction_coefficient = 0.7
 bump_back = 0.8
 
+
 def move(thing):
     thing.speed = np.linalg.norm(thing.velocity)
-    thing.max_steer = 47 - 0.1 * thing.speed
+    thing.max_steer = max(50 - 0.15 * thing.speed, 5)
     bump(thing)
     check_direction(thing)
     if thing.steer != 0:
@@ -38,8 +39,9 @@ def get_net_force(thing):
     thing.force = thing.thrust
     if thing.speed < 1 and thing.thrust == 0:
         thing.velocity = np.array([0.0, 0.0])
+
     elif thing.speed > 0:
-        thing.force = thing.thrust - thing.direction * (drag + thing.friction)
+        thing.force = thing.thrust - thing.direction * (drag + thing.friction + abs(thing.steer) * 0.05 * drag)
     thing.force = get_xy(thing.force, thing.rotation, 1)
 
 
