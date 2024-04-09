@@ -1,5 +1,6 @@
 import math
-from math import cos,sin,tan
+from math import cos, sin, tan
+
 import numpy as np
 
 current_time = 0
@@ -13,7 +14,7 @@ bump_back = 0.8
 def move(thing):
     thing.speed = np.linalg.norm(thing.velocity)
     thing.max_steer = max(50 - 0.15 * thing.speed, 5)
-    bump(thing)
+    bump_border(thing)
     check_direction(thing)
     if thing.steer != 0:
         get_rotation(thing)
@@ -21,7 +22,7 @@ def move(thing):
     get_displacement(thing)
 
 
-def bump(thing):
+def bump_border(thing):
     if thing.position[0] >= world_size[0] and thing.velocity[0] > 0:
         thing.velocity *= -bump_back
     elif thing.position[0] <= 0 and thing.velocity[0] < 0:
@@ -32,16 +33,31 @@ def bump(thing):
         thing.velocity *= -bump_back
 
 
+def bump_objects(object1, object2):
+    x1, y1 = tuple(object1.position)
+    x2, y2 = tuple(object2.position)
+    speed = float(np.average([object1.speed, object2.speed]))
+
+    rel_vector = np.array([x2 - x1, y2 - y1])
+    new_velocity = rel_vector * speed / np.linalg.norm(rel_vector)
+    object1.velocity = -new_velocity
+    object2.velocity = new_velocity
+
+
 def get_net_force(thing):
     drag = drag_coefficient * thing.speed**2
-    if (thing.thrust > 0 and thing.direction == -1) or (thing.thrust < 0 and thing.direction == 1):
+    if (thing.thrust > 0 and thing.direction == -1) or (
+        thing.thrust < 0 and thing.direction == 1
+    ):
         thing.thrust *= 2
     thing.force = thing.thrust
     if thing.speed < 1 and thing.thrust == 0:
         thing.velocity = np.array([0.0, 0.0])
 
     elif thing.speed > 0:
-        thing.force = thing.thrust - thing.direction * (drag + thing.friction + abs(thing.steer) * 0.05 * drag)
+        thing.force = thing.thrust - thing.direction * (
+            drag + thing.friction + abs(thing.steer) * 0.05 * drag
+        )
     thing.force = get_xy(thing.force, thing.rotation, 1)
 
 
@@ -55,15 +71,15 @@ def get_rotation(thing):
 
 def get_xy(value, rotation, direction):
     theta = np.radians(rotation)
-    vector_x = value*cos(theta) * direction
-    vector_y = value*sin(theta) * direction
+    vector_x = value * cos(theta) * direction
+    vector_y = value * sin(theta) * direction
     return np.array([vector_x, vector_y])
 
 
 def get_angle_difference(angleA, angleB):
     difference = abs((angleA - angleB))
     if difference > 180:
-        difference = 360-180
+        difference = 360 - 180
     return difference
 
 
@@ -79,7 +95,3 @@ def get_displacement(thing):
     acceleration = thing.force / thing.mass
     thing.velocity = thing.velocity + acceleration * dt
     thing.position = thing.position + thing.velocity * dt
-
-
-
-

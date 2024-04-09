@@ -1,2 +1,2 @@
 numpy==1.26.4
-pyglet==2.0.14
+pyglet==2.0.15
