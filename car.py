@@ -3,18 +3,18 @@ from math import cos, radians, sin
 import numpy as np
 from pyglet.graphics import Batch
 from pyglet.sprite import Sprite
-from pyglet.window import key
 
 from entities.body import Body
+from entities.world import World
 import physics
-from physics import bump_objects, dt, world_size
 from utils.pyglet import PygletUtils
 from utils.shaper import ShaperUtils
+from utils.utils import get_world_size
 
 car_width = 40
 
 cars = []
-collision_matrix = np.zeros(shape=world_size, dtype=int)
+collision_matrix = np.zeros(shape=get_world_size(), dtype=int)
 
 
 class Car(object):
@@ -62,18 +62,13 @@ class Car(object):
 
     def update(self):
         if (
-            physics.current_time % self.body.turbo_cooldown == 0
+            World.current_time % self.body.turbo_cooldown == 0
             and self.body.turbo_fuel < self.body.turbo_capacity
         ):
             self.body.turbo_fuel += 8
-        self.body.thrust = 0
-        self.fire_sprite.visible = False
-        self.get_player_input()
         physics.move(self.body)
-        print(f"Body position: {self.body.position}")
         self.car_sprite.x = self.body.position[0]
         self.car_sprite.y = self.body.position[1]
-        self.set_fire_position()
         self.car_sprite.rotation = -self.body.rotation
 
     def set_fire_position(self):
@@ -84,56 +79,6 @@ class Car(object):
         self.fire_sprite.y = self.car_sprite.y - (
             self.car_sprite.width * 1.12
         ) * np.sin(np.radians(self.body.rotation))
-
-    def get_player_input(self):
-        if self.player == 1:
-            up = self.key_handler[key.UP]
-            down = self.key_handler[key.DOWN]
-            left = self.key_handler[key.LEFT]
-            right = self.key_handler[key.RIGHT]
-            turbo = self.key_handler[key.M]
-        else:
-            up = self.key_handler[key.W]
-            down = self.key_handler[key.S]
-            left = self.key_handler[key.A]
-            right = self.key_handler[key.D]
-            turbo = self.key_handler[key.LSHIFT]
-
-        if up:
-            self.go_forward()
-        if down:
-            self.go_backwards()
-        if turbo:
-            self.run_turbo()
-        if left:
-            self.turn_left()
-        if right:
-            self.turn_right()
-        if (not left) and (not right) and 0 < abs(self.body.steer):
-            self.body.steer += 100 * dt if self.body.steer < 0 else -100 * dt
-
-    def go_forward(self):
-        self.body.thrust = 1300
-
-    def go_backwards(self):
-        if self.body.speed > 10:
-            self.body.thrust = -1300
-        else:
-            self.body.thrust = -800
-
-    def run_turbo(self):
-        if self.body.turbo_fuel > 0:
-            self.fire_sprite.visible = True
-            self.body.turbo_fuel -= 1
-            self.body.thrust += 10000
-
-    def turn_left(self):
-        if self.body.steer < self.body.max_steer:
-            self.body.steer += 100 * dt
-
-    def turn_right(self):
-        if self.body.steer > -self.body.max_steer:
-            self.body.steer -= 100 * dt
 
     def draw_debug_visuals(self):
         px, py = self.body.position
@@ -150,7 +95,7 @@ def check_collisions():
                 continue
             if two_cars_collide(car1, car2):
                 print(f"Boom!! {car1.id} and {car2.id} collide")
-                bump_objects(car1, car2)
+                physics.bump_objects(car1, car2)
 
 
 def two_cars_collide(car1: Car, car2: Car) -> bool:

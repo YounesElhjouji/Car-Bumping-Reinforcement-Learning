@@ -1,12 +1,14 @@
+from controller import handle_key_input
+from entities.car_collection import CarCollection
 from entities.world import World
 from interfaces.pyglet_interface import PygletInterface, add_car
-import physics
 
 
 def on_update(dt):
-    physics.current_time += 1
-    for car in World.cars:
+    World.current_time += dt
+    for car in CarCollection.cars:
         car.draw_debug_visuals()
+        handle_key_input(car)
         car.update()
 
 

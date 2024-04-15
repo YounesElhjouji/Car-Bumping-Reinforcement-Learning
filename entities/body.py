@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from entities.world import World
+
 
 friction_coefficient = 0.7
 
@@ -20,15 +22,16 @@ class Body:
         self.direction = 1
         self.rotation: float = rotation
 
-        self.force: float = 0
-        self.thrust: float = 0
-        self.steer: float = 0
+        self.force = 0.0
+        self.thrust = 0.0
+        self.steer = 0.0
         self.mass = 10
         self.friction = self.mass * 9.81 * friction_coefficient
         self.max_steer = 20.0
 
+        self.is_turbo = False
         self.turbo_capacity = 40
-        self.turbo_cooldown = 50
+        self.turbo_cooldown = 50 * World.dt
         self.turbo_fuel = self.turbo_capacity
 
     @property

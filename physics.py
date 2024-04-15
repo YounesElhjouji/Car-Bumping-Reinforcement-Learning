@@ -1,11 +1,10 @@
 from math import atan2, cos, degrees, sin, tan
+from entities.world import World
 
 import numpy as np
 
 from entities.body import Body
 
-current_time = 0
-dt = 0.01
 world_size = (1024, 600)
 drag_coefficient = 0.02
 friction_coefficient = 0.7
@@ -20,6 +19,7 @@ def move(body: Body):
         get_rotation(body)
     get_net_force(body)
     get_displacement(body)
+    body.is_turbo = False
 
 
 def bump_border(body: Body):
@@ -64,15 +64,9 @@ def get_net_force(body: Body):
 def get_rotation(body: Body):
     turning_radius = body.width / tan(np.radians(body.steer))
     angular_velocity = body.speed / turning_radius
-    body.rotation += np.degrees(angular_velocity) * dt
+    body.rotation += np.degrees(angular_velocity) * World.dt
     body.rotation = body.rotation % 360
     body.velocity = get_xy(body.speed, body.rotation, body.direction)
-    # print(
-    #     f"Steer {body.steer}deg, width: {body.width}px, Speed: {int(body.speed)}px/sec"
-    # )
-    # print(
-    #     f"Turn Radius {round(turning_radius)}px, Angular Speed: {round(angular_velocity, 2)}px/sec, Rotation: {round(body.rotation)}deg"
-    # )
 
 
 def get_xy(value, rotation, direction):
@@ -99,5 +93,41 @@ def check_direction(body: Body):
 
 def get_displacement(body: Body):
     acceleration = body.force / body.mass
-    body.velocity = body.velocity + acceleration * dt
-    body.position = body.position + body.velocity * dt
+    body.velocity = body.velocity + acceleration * World.dt
+    body.position = body.position + body.velocity * World.dt
+
+
+def go_forward(body):
+    body.thrust = 1300
+
+
+def go_backwards(body):
+    if body.speed > 10:
+        body.thrust = -1300
+    else:
+        body.thrust = -800
+
+
+def run_turbo(body):
+    if body.turbo_fuel > 0:
+        body.turbo_fuel -= 1
+        body.thrust += 10000
+        body.is_turbo = True
+
+
+def turn_left(body):
+    if body.steer < body.max_steer:
+        body.steer += 100 * World.dt
+
+
+def turn_right(body):
+    if body.steer > -body.max_steer:
+        body.steer -= 100 * World.dt
+
+
+def reverse_steer(body):
+    body.steer += 100 * World.dt if body.steer < 0 else -100 * World.dt
+
+
+def cancel_thrust(body):
+    body.thrust = 0

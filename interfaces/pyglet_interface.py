@@ -6,16 +6,17 @@ from pyglet.graphics import Batch
 from pyglet.window import Window
 
 from car import Car
+from entities.car_collection import CarCollection
 from entities.world import World
-from utils.utils import get_window_size
+from utils.utils import get_world_size
 
 
 class PygletInterface:
     batch = Batch()
     pyglet.resource.path = ["./resources"]
     pyglet.resource.reindex()
-    world_size = get_window_size()
-    window = Window(world_size[0], world_size[1])
+    world_size = get_world_size()
+    window = Window(World.size[0], World.size[1])
     gl.glClearColor(1, 1, 1, 1)
     key_handler = pyglet.window.key.KeyStateHandler()
     window.push_handlers(key_handler)
@@ -37,7 +38,7 @@ class PygletInterface:
 
 
 def add_car(position: list[int]):
-    World.cars.append(
+    CarCollection.cars.append(
         Car(
             handler=PygletInterface.key_handler,
             position=np.array(position),

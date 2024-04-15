@@ -1,8 +1,7 @@
-from car import Car
-from utils.utils import get_window_size
+from utils.utils import get_world_size
 
 
 class World:
-    size = get_window_size()
-    cars: list[Car] = []
+    size = get_world_size()
     dt = 0.01
+    current_time = 0.0
