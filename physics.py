@@ -1,7 +1,8 @@
-import math
-from math import cos, sin, tan
+from math import atan2, cos, degrees, sin, tan
 
 import numpy as np
+
+from entities.body import Body
 
 current_time = 0
 dt = 0.01
@@ -11,26 +12,25 @@ friction_coefficient = 0.7
 bump_back = 0.8
 
 
-def move(thing):
-    thing.speed = np.linalg.norm(thing.velocity)
-    thing.max_steer = max(50 - 0.15 * thing.speed, 5)
-    bump_border(thing)
-    check_direction(thing)
-    if thing.steer != 0:
-        get_rotation(thing)
-    get_net_force(thing)
-    get_displacement(thing)
+def move(body: Body):
+    body.max_steer = max(50 - 0.15 * body.speed, 5)
+    bump_border(body)
+    check_direction(body)
+    if body.steer != 0:
+        get_rotation(body)
+    get_net_force(body)
+    get_displacement(body)
 
 
-def bump_border(thing):
-    if thing.position[0] >= world_size[0] and thing.velocity[0] > 0:
-        thing.velocity *= -bump_back
-    elif thing.position[0] <= 0 and thing.velocity[0] < 0:
-        thing.velocity *= -bump_back
-    if thing.position[1] >= world_size[1] and thing.velocity[1] > 0:
-        thing.velocity *= -bump_back
-    elif thing.position[1] <= 0 and thing.velocity[1] < 0:
-        thing.velocity *= -bump_back
+def bump_border(body: Body):
+    if body.position[0] >= world_size[0] and body.velocity[0] > 0:
+        body.velocity *= -bump_back
+    elif body.position[0] <= 0 and body.velocity[0] < 0:
+        body.velocity *= -bump_back
+    if body.position[1] >= world_size[1] and body.velocity[1] > 0:
+        body.velocity *= -bump_back
+    elif body.position[1] <= 0 and body.velocity[1] < 0:
+        body.velocity *= -bump_back
 
 
 def bump_objects(object1, object2):
@@ -44,29 +44,35 @@ def bump_objects(object1, object2):
     object2.velocity = new_velocity
 
 
-def get_net_force(thing):
-    drag = drag_coefficient * thing.speed**2
-    if (thing.thrust > 0 and thing.direction == -1) or (
-        thing.thrust < 0 and thing.direction == 1
+def get_net_force(body: Body):
+    drag = drag_coefficient * body.speed**2
+    if (body.thrust > 0 and body.direction == -1) or (
+        body.thrust < 0 and body.direction == 1
     ):
-        thing.thrust *= 2
-    thing.force = thing.thrust
-    if thing.speed < 1 and thing.thrust == 0:
-        thing.velocity = np.array([0.0, 0.0])
+        body.thrust *= 2
+    body.force = body.thrust
+    if body.speed < 1 and body.thrust == 0:
+        body.velocity = np.array([0.0, 0.0])
 
-    elif thing.speed > 0:
-        thing.force = thing.thrust - thing.direction * (
-            drag + thing.friction + abs(thing.steer) * 0.05 * drag
+    elif body.speed > 0:
+        body.force = body.thrust - body.direction * (
+            drag + body.friction + abs(body.steer) * 0.05 * drag
         )
-    thing.force = get_xy(thing.force, thing.rotation, 1)
+    body.force = get_xy(body.force, body.rotation, 1)
 
 
-def get_rotation(thing):
-    turning_radius = thing.length / tan(np.radians(thing.steer))
-    angular_velocity = thing.speed / turning_radius
-    thing.rotation += np.degrees(angular_velocity) * dt
-    thing.rotation = thing.rotation % 360
-    thing.velocity = get_xy(thing.speed, thing.rotation, thing.direction)
+def get_rotation(body: Body):
+    turning_radius = body.width / tan(np.radians(body.steer))
+    angular_velocity = body.speed / turning_radius
+    body.rotation += np.degrees(angular_velocity) * dt
+    body.rotation = body.rotation % 360
+    body.velocity = get_xy(body.speed, body.rotation, body.direction)
+    # print(
+    #     f"Steer {body.steer}deg, width: {body.width}px, Speed: {int(body.speed)}px/sec"
+    # )
+    # print(
+    #     f"Turn Radius {round(turning_radius)}px, Angular Speed: {round(angular_velocity, 2)}px/sec, Rotation: {round(body.rotation)}deg"
+    # )
 
 
 def get_xy(value, rotation, direction):
@@ -83,15 +89,15 @@ def get_angle_difference(angleA, angleB):
     return difference
 
 
-def check_direction(thing):
-    velocity_angle = math.degrees(math.atan2(thing.velocity[1], thing.velocity[0]))
-    thing.direction = 1
-    difference = get_angle_difference(velocity_angle % 360, thing.rotation)
+def check_direction(body: Body):
+    velocity_angle = degrees(atan2(body.velocity[1], body.velocity[0]))
+    body.direction = 1
+    difference = get_angle_difference(velocity_angle % 360, body.rotation)
     if difference > 90:
-        thing.direction = -1
+        body.direction = -1
 
 
-def get_displacement(thing):
-    acceleration = thing.force / thing.mass
-    thing.velocity = thing.velocity + acceleration * dt
-    thing.position = thing.position + thing.velocity * dt
+def get_displacement(body: Body):
+    acceleration = body.force / body.mass
+    body.velocity = body.velocity + acceleration * dt
+    body.position = body.position + body.velocity * dt

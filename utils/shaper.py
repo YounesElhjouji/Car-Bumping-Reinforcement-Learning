@@ -3,7 +3,7 @@ from pyglet import shapes
 import webcolors
 
 
-class Shaper:
+class ShaperUtils:
     point_size = 5
 
     @classmethod
