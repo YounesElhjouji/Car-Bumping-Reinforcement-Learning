@@ -69,3 +69,30 @@ class TrigUtils:
             top_left=corners[3],
         )
         return rect
+
+    @staticmethod
+    def project_polygon(axis, polygon):
+        projected = [np.dot(vertex, axis) for vertex in polygon]
+        return min(projected), max(projected)
+
+    @staticmethod
+    def are_colliding(rect1: Rectangle, rect2: Rectangle) -> bool:
+        edges = []
+        for rect in (rect1, rect2):
+            points = rect.points
+            for i in range(len(points)):
+                edge_vec = points[i] - points[i - 1]
+                # Perpendicular vector to the edge (normal)
+                normal = np.array([-edge_vec[1], edge_vec[0]])
+                edges.append(normal)
+
+        # For each axis (normal to the edges), project and check for overlap
+        for axis in edges:
+            p1_min, p1_max = TrigUtils.project_polygon(axis, rect1.points)
+            p2_min, p2_max = TrigUtils.project_polygon(axis, rect2.points)
+
+            # Check if there is a gap between the projections
+            if p1_max < p2_min or p2_max < p1_min:
+                return False  # No overlap, no collision
+
+        return True  # All projections overlap, rectangles collide

@@ -1,11 +1,11 @@
 from math import atan2, cos, degrees, sin, tan
-from car import Car
 from entities.car_collection import CarCollection
 from entities.world import World
 
 import numpy as np
 
 from entities.body import Body
+from utils.trigonometry import TrigUtils
 
 drag_coefficient = 0.02
 friction_coefficient = 0.7
@@ -149,14 +149,15 @@ def refill_turbo(body: Body):
 def check_collisions():
     for car1 in CarCollection.cars:
         for car2 in CarCollection.cars:
-            if car1 == car2:
+            body1, body2 = car1.body, car2.body
+            if body1 == body2:
                 continue
-            if two_cars_collide(car1, car2):
+            if TrigUtils.are_colliding(body1.rectangle, body2.rectangle):
                 print("Boom!!")
-                bump_objects(car1, car2)
+                bump_objects(body1, body2)
 
 
-def bump_objects(object1, object2):
+def bump_objects(object1: Body, object2: Body):
     x1, y1 = tuple(object1.position)
     x2, y2 = tuple(object2.position)
     speed = float(np.average([object1.speed, object2.speed]))
@@ -165,7 +166,3 @@ def bump_objects(object1, object2):
     new_velocity = rel_vector * speed / np.linalg.norm(rel_vector)
     object1.velocity = -new_velocity
     object2.velocity = new_velocity
-
-
-def two_cars_collide(car1: Car, car2: Car) -> bool:
-    pass

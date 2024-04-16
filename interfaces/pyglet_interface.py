@@ -38,7 +38,7 @@ class PygletInterface:
         pyglet.app.run()
 
 
-def add_car(position: list[int], rotation: int = 0) -> None:
+def add_car(position: list[int], rotation: int = 0, player: int = 1) -> None:
     batch = PygletInterface.batch
     car_sprite = PygletUtils.create_car_sprite(width=World.car_width, batch=batch)
     fire_sprite = PygletUtils.create_fire_sprite(
@@ -51,5 +51,6 @@ def add_car(position: list[int], rotation: int = 0) -> None:
             rotation=rotation,
             car_sprite=car_sprite,
             fire_sprite=fire_sprite,
+            player=player,
         )
     )

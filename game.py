@@ -17,7 +17,9 @@ def on_update(dt):
         PygletUtils.set_car_sprite_position(car)
         PygletUtils.set_fire_position(car)
         car.body.is_turbo = False
+    physics.check_collisions()
 
 
 add_car(position=[512, 300])
+add_car(position=[100, 100], player=2)
 PygletInterface.setup(on_update=on_update)
