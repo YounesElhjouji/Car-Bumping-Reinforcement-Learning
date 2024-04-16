@@ -1,6 +1,7 @@
 import numpy as np
 from pyglet.sprite import Sprite
 
+from entities.enums import Player
 from entities.body import Body
 
 
@@ -11,7 +12,7 @@ class Car(object):
         fire_sprite: Sprite,
         position: np.ndarray | None = None,
         rotation=80,
-        player=1,
+        player: Player = Player.P1,
     ):
         self.player = player
         self.car_sprite = car_sprite
