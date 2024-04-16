@@ -8,6 +8,7 @@ from pyglet.window import Window
 from car import Car
 from entities.car_collection import CarCollection
 from entities.world import World
+from utils.pyglet import PygletUtils
 from utils.utils import get_world_size
 
 
@@ -37,11 +38,18 @@ class PygletInterface:
         pyglet.app.run()
 
 
-def add_car(position: list[int]):
+def add_car(position: list[int], rotation: int = 0) -> None:
+    batch = PygletInterface.batch
+    car_sprite = PygletUtils.create_car_sprite(width=World.car_width, batch=batch)
+    fire_sprite = PygletUtils.create_fire_sprite(
+        car_height=car_sprite.height, batch=batch
+    )
+
     CarCollection.cars.append(
         Car(
-            handler=PygletInterface.key_handler,
             position=np.array(position),
-            batch=PygletInterface.batch,
+            rotation=rotation,
+            car_sprite=car_sprite,
+            fire_sprite=fire_sprite,
         )
     )

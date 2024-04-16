@@ -1,6 +1,9 @@
 from pyglet.graphics import Batch
+from math import sin, cos, radians
 from pyglet.resource import Loader
 from pyglet.sprite import Sprite
+
+from car import Car
 
 
 class PygletUtils:
@@ -18,6 +21,35 @@ class PygletUtils:
         my_image = Loader(path="resources").image(name="fire.png")
         fire_sprite = Sprite(my_image, batch=batch)
         fire_sprite.anchor_x = fire_sprite.width
-        fire_sprite.anchor_y = fire_sprite.height / 2
-        fire_sprite.scale = 0.8 * car_height / fire_sprite.height
+        fire_sprite.anchor_y = fire_sprite.height // 2
+        fire_sprite.scale = 0.6 * car_height / fire_sprite.height
+        fire_sprite.visible = True
         return fire_sprite
+
+    @staticmethod
+    def set_car_sprite_position(car: Car):
+        car.car_sprite.x = car.body.position[0]
+        car.car_sprite.y = car.body.position[1]
+        car.car_sprite.rotation = -car.body.rotation
+
+    @staticmethod
+    def set_fire_position(car: Car):
+        """
+        Position fire sprite relative to car sprite if turbo is on
+        """
+        offset_h = -1.05
+        offset_v = -0.3
+        car.fire_sprite.visible = car.body.is_turbo
+        if not car.body.is_turbo:
+            return
+        car.fire_sprite.rotation = car.car_sprite.rotation
+        car.fire_sprite.x = (
+            car.car_sprite.x
+            + offset_h * car.fire_sprite.width * cos(radians(car.body.rotation))
+            + offset_v * car.fire_sprite.height * sin(radians(car.body.rotation))
+        )
+        car.fire_sprite.y = (
+            car.car_sprite.y
+            + offset_h * car.fire_sprite.width * sin(radians(car.body.rotation))
+            - offset_v * car.fire_sprite.height * cos(radians(car.body.rotation))
+        )
