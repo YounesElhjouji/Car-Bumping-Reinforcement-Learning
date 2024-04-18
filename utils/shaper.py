@@ -35,16 +35,16 @@ class ShapeUtils:
             height=body.height,
             angle=body.rotation,
         )
-        car.debug_visuals.update(
-            {
-                "pos": pos,
-                "center": center,
-                "points": [
-                    cls.get_point(x=p[0], y=p[1], color="orange", batch=batch)
-                    for p in rect.points
-                ],
-            }
-        )
+        # car.debug_visuals.update(
+        #     {
+        #         "pos": pos,
+        #         "center": center,
+        #         "points": [
+        #             cls.get_point(x=p[0], y=p[1], color="orange", batch=batch)
+        #             for p in rect.points
+        #         ],
+        #     }
+        # )
 
     @staticmethod
     def get_portion(body: Body, is_x: bool):

@@ -5,4 +5,4 @@ class World:
     size = get_world_size()
     dt = 0.01
     current_time = 0.0
-    car_width = 40
+    car_width = 35

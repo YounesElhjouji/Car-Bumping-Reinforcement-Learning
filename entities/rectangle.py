@@ -13,6 +13,7 @@ class Rectangle:
     def points(self) -> list[np.ndarray]:
         return [self.bot_left, self.bot_right, self.top_right, self.top_left]
 
+    @property
     def center(self) -> np.ndarray:
         """Calculates the center of the rectangle."""
         x_coords = [p[0] for p in self.points]

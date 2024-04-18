@@ -24,3 +24,4 @@ class Car(object):
             rotation=rotation,
         )
         self.debug_visuals = {}
+        self.metadata = {}  # Can be used by modules to store metadata

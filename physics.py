@@ -1,4 +1,5 @@
 from math import atan2, cos, degrees, sin, tan
+import itertools
 from entities.car_collection import CarCollection
 from entities.world import World
 
@@ -9,20 +10,20 @@ from utils.trigonometry import TrigUtils
 
 drag_coefficient = 0.02
 friction_coefficient = 0.7
-bump_back = 0.8
+bump_back = 1
 
 # Move the body
 
 
 def move(body: Body):
+    body.update_rectangle()
     body.max_steer = max(50 - 0.15 * body.speed, 5)
     bump_border(body)
-    body.update_rectangle()
     check_direction(body)
     if body.steer != 0:
         get_rotation(body)
-    get_net_force(body)
-    get_displacement(body)
+    net_force = get_net_force(body)
+    get_displacement(body, net_force)
 
 
 def bump_border(body: Body):
@@ -41,21 +42,37 @@ def bump_corner(body: Body, point: np.ndarray):
         body.velocity *= -bump_back
 
 
-def get_net_force(body: Body):
-    drag = drag_coefficient * body.speed**2
+def get_net_force(body: Body) -> np.ndarray:
+    # break when thrusting in direction opposite to movement
     if (body.thrust > 0 and body.direction == -1) or (
         body.thrust < 0 and body.direction == 1
     ):
         body.thrust *= 2
-    body.force = body.thrust
-    if body.speed < 1 and body.thrust == 0:
-        body.velocity = np.array([0.0, 0.0])
 
-    elif body.speed > 0:
-        body.force = body.thrust - body.direction * (
+    force = get_xy(body.thrust, body.rotation, 1)
+
+    if body.speed > 0:
+        drag = drag_coefficient * body.speed**2
+        friction_force = body.direction * (
             drag + body.friction + abs(body.steer) * 0.05 * drag
         )
-    body.force = get_xy(body.force, body.rotation, 1)
+        force += get_xy(friction_force, body.rotation, -1)
+
+        sideways_vector = np.array(
+            [-np.sin(np.radians(body.rotation)), np.cos(np.radians(body.rotation))]
+        )
+        sideways_velocity = np.dot(body.velocity, sideways_vector) * sideways_vector
+        side_speed = np.linalg.norm(sideways_velocity)
+
+        if side_speed > 0:
+            side_direction = sideways_velocity / side_speed
+            sideways_friction = -side_direction * 0.3 * side_speed**2
+            force += sideways_friction
+
+    if np.linalg.norm(body.collision_force) > 0:
+        force += body.collision_force
+
+    return force
 
 
 def get_rotation(body: Body):
@@ -88,8 +105,10 @@ def check_direction(body: Body):
         body.direction = -1
 
 
-def get_displacement(body: Body):
-    acceleration = body.force / body.mass
+def get_displacement(body: Body, net_force: np.ndarray):
+    if body.speed < 1 and body.thrust == 0:
+        body.velocity = np.array([0.0, 0.0])
+    acceleration = net_force / body.mass
     body.velocity = body.velocity + acceleration * World.dt
     body.position = body.position + body.velocity * World.dt
 
@@ -147,22 +166,36 @@ def refill_turbo(body: Body):
 
 
 def check_collisions():
-    for car1 in CarCollection.cars:
-        for car2 in CarCollection.cars:
-            body1, body2 = car1.body, car2.body
-            if body1 == body2:
-                continue
-            if TrigUtils.are_colliding(body1.rectangle, body2.rectangle):
-                print("Boom!!")
-                bump_objects(body1, body2)
+    for car in CarCollection.cars:
+        car.body.collision_force *= 0.1
+    pairs = list(itertools.combinations(CarCollection.cars, 2))
+    for car1, car2 in pairs:
+        body1, body2 = car1.body, car2.body
+        if TrigUtils.are_colliding(body1.rectangle, body2.rectangle):
+            print("Boom!!")
+            bump_bodies(body1, body2)
 
 
-def bump_objects(object1: Body, object2: Body):
-    x1, y1 = tuple(object1.position)
-    x2, y2 = tuple(object2.position)
-    speed = float(np.average([object1.speed, object2.speed]))
+def bump_bodies(body1: Body, body2: Body):
+    x1, y1 = tuple(body1.rectangle.center)
+    x2, y2 = tuple(body2.rectangle.center)
 
+    # Calculate the vector between the centers of the two bodies
     rel_vector = np.array([x2 - x1, y2 - y1])
-    new_velocity = rel_vector * speed / np.linalg.norm(rel_vector)
-    object1.velocity = -new_velocity
-    object2.velocity = new_velocity
+
+    # Normalize the vector to get the direction
+    rel_direction = rel_vector / np.linalg.norm(rel_vector)
+
+    # Calculate the relative velocity between the bodies
+    rel_velocity = body2.velocity - body1.velocity
+
+    # Calculate the magnitude of the collision force
+    collision_force = 5 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
+
+    # Remove the component of the velocity that is directed towards the other body
+    body1.velocity -= max(0, np.dot(body1.velocity, rel_direction)) * rel_direction
+    body2.velocity -= max(0, np.dot(body2.velocity, -rel_direction)) * -rel_direction
+
+    # Apply the collision force in the direction opposite to the relative velocity
+    body1.collision_force -= rel_direction * collision_force
+    body2.collision_force += rel_direction * collision_force
