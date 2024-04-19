@@ -67,9 +67,9 @@ def random_input(car: Car) -> ControlInput:
         car.metadata["steer_controls"] = steer_controls
     gas_control = gas_controls.pop()
     steer_control = steer_controls.pop()
-    if abs(World.size[0] / 2 - car.body.position[0]) > World.size[0] / 2 - 50:
+    if abs(World.size[0] / 2 - car.body.position[0]) > World.size[0] / 2 - 90:
         steer_control = "right"
-    if abs(World.size[1] / 2 - car.body.position[1]) > World.size[1] / 2 - 50:
+    if abs(World.size[1] / 2 - car.body.position[1]) > World.size[1] / 2 - 90:
         steer_control = "right"
     up = gas_control == "up"
     down = gas_control == "down"
