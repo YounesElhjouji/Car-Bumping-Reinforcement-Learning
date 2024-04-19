@@ -15,6 +15,14 @@ bump_back = 1
 # Move the body
 
 
+def on_update(dt, collection: CarCollection):
+    World.current_time += dt
+    check_collisions(collection)
+    for car in collection.cars:
+        move(car.body)
+        refill_turbo(car.body)
+
+
 def move(body: Body):
     body.update_rectangle()
     body.max_steer = max(50 - 0.15 * body.speed, 5)
@@ -165,37 +173,25 @@ def refill_turbo(body: Body):
 # Collision Detection
 
 
-def check_collisions():
-    for car in CarCollection.cars:
+def check_collisions(collection: CarCollection):
+    for car in collection.cars:
         car.body.collision_force *= 0.1
-    pairs = list(itertools.combinations(CarCollection.cars, 2))
+    pairs = list(itertools.combinations(collection.cars, 2))
     for car1, car2 in pairs:
         body1, body2 = car1.body, car2.body
         if TrigUtils.are_colliding(body1.rectangle, body2.rectangle):
-            print("Boom!!")
             bump_bodies(body1, body2)
 
 
 def bump_bodies(body1: Body, body2: Body):
-    x1, y1 = tuple(body1.rectangle.center)
-    x2, y2 = tuple(body2.rectangle.center)
-
-    # Calculate the vector between the centers of the two bodies
-    rel_vector = np.array([x2 - x1, y2 - y1])
-
-    # Normalize the vector to get the direction
+    rel_vector = body2.rectangle.center - body1.rectangle.center
     rel_direction = rel_vector / np.linalg.norm(rel_vector)
-
-    # Calculate the relative velocity between the bodies
     rel_velocity = body2.velocity - body1.velocity
-
-    # Calculate the magnitude of the collision force
-    collision_force = 5 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
+    collision_force = 2 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
 
     # Remove the component of the velocity that is directed towards the other body
     body1.velocity -= max(0, np.dot(body1.velocity, rel_direction)) * rel_direction
     body2.velocity -= max(0, np.dot(body2.velocity, -rel_direction)) * -rel_direction
 
-    # Apply the collision force in the direction opposite to the relative velocity
     body1.collision_force -= rel_direction * collision_force
     body2.collision_force += rel_direction * collision_force

@@ -6,7 +6,6 @@ from pyglet.graphics import Batch
 from pyglet.window import Window
 
 from car import Car
-from entities.car_collection import CarCollection
 from entities.enums import Player
 from entities.world import World
 from utils.pyglet import PygletUtils
@@ -39,19 +38,19 @@ class PygletInterface:
         pyglet.app.run()
 
 
-def add_car(position: list[int], rotation: int = 0, player: Player = Player.P1) -> None:
+def create_car(
+    position: list[int], rotation: int = 0, player: Player = Player.P1
+) -> Car:
     batch = PygletInterface.batch
     car_sprite = PygletUtils.create_car_sprite(width=World.car_width, batch=batch)
     fire_sprite = PygletUtils.create_fire_sprite(
         car_height=car_sprite.height, batch=batch
     )
 
-    CarCollection.cars.append(
-        Car(
-            position=np.array(position),
-            rotation=rotation,
-            car_sprite=car_sprite,
-            fire_sprite=fire_sprite,
-            player=player,
-        )
+    return Car(
+        position=np.array(position),
+        rotation=rotation,
+        car_sprite=car_sprite,
+        fire_sprite=fire_sprite,
+        player=player,
     )
