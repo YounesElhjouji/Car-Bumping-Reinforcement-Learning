@@ -67,9 +67,9 @@ def random_input(car: Car) -> ControlInput:
         car.metadata["steer_controls"] = steer_controls
     gas_control = gas_controls.pop()
     steer_control = steer_controls.pop()
-    if abs(World.size[0] / 2 - car.body.position[0]) > World.size[0] / 2 - 90:
+    if abs(World.size[0] / 2 - car.body.position[0]) > World.size[0] / 2 - 50:
         steer_control = "right"
-    if abs(World.size[1] / 2 - car.body.position[1]) > World.size[1] / 2 - 91:
+    if abs(World.size[1] / 2 - car.body.position[1]) > World.size[1] / 2 - 50:
         steer_control = "right"
     up = gas_control == "up"
     down = gas_control == "down"
@@ -82,6 +82,12 @@ def control_car(car: Car):
     # if car.metadata.get("bump", False):
     #     return
     inp = get_control_input(car)
+    if (not inp.left) and (not inp.right) and 0 < abs(car.body.steer):
+        physics.reverse_steer(car.body)
+    if (not inp.up) and (not inp.down):
+        physics.cancel_thrust(car.body)
+    if not inp.turbo:
+        physics.cancel_turbo(car.body)
     if inp.up:
         physics.go_forward(car.body)
     if inp.down:
@@ -92,7 +98,3 @@ def control_car(car: Car):
         physics.turn_left(car.body)
     if inp.right:
         physics.turn_right(car.body)
-    if (not inp.left) and (not inp.right) and 0 < abs(car.body.steer):
-        physics.reverse_steer(car.body)
-    if (not inp.up) and (not inp.down):
-        physics.cancel_thrust(car.body)

@@ -36,18 +36,25 @@ def move(body: Body):
 
 def bump_border(body: Body):
     for point in body.rectangle.points:
-        bump_corner(body, point)
+        is_bump = bump_corner(body, point)
+        if is_bump:
+            return
 
 
-def bump_corner(body: Body, point: np.ndarray):
-    if point[0] >= World.size[0] and body.velocity[0] > 0:
-        body.velocity *= -bump_back
-    elif point[0] <= 0 and body.velocity[0] < 0:
-        body.velocity *= -bump_back
-    if point[1] >= World.size[1] and body.velocity[1] > 0:
-        body.velocity *= -bump_back
-    elif point[1] <= 0 and body.velocity[1] < 0:
-        body.velocity *= -bump_back
+def bump_corner(body: Body, point: np.ndarray) -> bool:
+    if point[0] >= World.size[0]:
+        bump_wall(body, np.array([1.0, 0.0]))
+        return True
+    if point[0] <= 0:
+        bump_wall(body, np.array([-1.0, 0.0]))
+        return True
+    if point[1] >= World.size[1]:
+        bump_wall(body, np.array([0.0, 1.0]))
+        return True
+    if point[1] <= 0:
+        bump_wall(body, np.array([0.0, -1.0]))
+        return True
+    return False
 
 
 def get_net_force(body: Body) -> np.ndarray:
@@ -160,6 +167,10 @@ def cancel_thrust(body: Body):
     body.thrust = 0
 
 
+def cancel_turbo(body: Body):
+    body.is_turbo = False
+
+
 def refill_turbo(body: Body):
     if (
         World.current_time - body.turbo_last_fuel > body.turbo_cooldown
@@ -187,11 +198,27 @@ def bump_bodies(body1: Body, body2: Body):
     rel_vector = body2.rectangle.center - body1.rectangle.center
     rel_direction = rel_vector / np.linalg.norm(rel_vector)
     rel_velocity = body2.velocity - body1.velocity
-    collision_force = 2 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
+    collision_force = float(
+        5 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
+    )
 
     # Remove the component of the velocity that is directed towards the other body
     body1.velocity -= max(0, np.dot(body1.velocity, rel_direction)) * rel_direction
     body2.velocity -= max(0, np.dot(body2.velocity, -rel_direction)) * -rel_direction
 
-    body1.collision_force -= rel_direction * collision_force
-    body2.collision_force += rel_direction * collision_force
+    set_collision_force(body1, collision_force, rel_direction, sign=-1)
+    set_collision_force(body2, collision_force, rel_direction, sign=1)
+
+
+def bump_wall(body: Body, rel_direction: np.ndarray):
+    collision_force = 80 * body.mass * body.speed
+    body.velocity -= max(0, np.dot(body.velocity, rel_direction)) * rel_direction
+    body.thrust = 0
+    set_collision_force(body, collision_force, rel_direction, sign=-1)
+
+
+def set_collision_force(
+    body: Body, collision_force: float, rel_direction: np.ndarray, sign: int
+):
+    collision_force = max(collision_force, 100)
+    body.collision_force += sign * collision_force * rel_direction
