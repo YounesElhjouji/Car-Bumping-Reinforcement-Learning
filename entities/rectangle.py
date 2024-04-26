@@ -3,6 +3,13 @@ from dataclasses import dataclass
 
 
 @dataclass
+class Line:
+    position: np.ndarray
+    rotation: float
+    length: float
+
+
+@dataclass
 class Rectangle:
     bot_left: np.ndarray
     bot_right: np.ndarray

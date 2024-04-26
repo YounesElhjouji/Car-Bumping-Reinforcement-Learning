@@ -64,3 +64,15 @@ class ShapeUtils:
                 body.position[1] + 0.5 * cls.get_portion(body, is_x=False),
             ]
         )
+
+    @classmethod
+    def get_line(cls, x1: int, y1: int, x2: int, y2: int, batch: Batch, width: int = 1):
+        return shapes.Line(
+            x=x1,
+            y=y1,
+            x2=x2,
+            y2=y2,
+            width=width,
+            color=webcolors.name_to_rgb("black"),
+            batch=batch,
+        )

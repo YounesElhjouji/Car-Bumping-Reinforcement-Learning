@@ -4,6 +4,7 @@ from pyglet.resource import Loader
 from pyglet.sprite import Sprite
 
 from car import Car
+from utils.shaper import ShapeUtils
 
 
 class PygletUtils:
@@ -53,3 +54,17 @@ class PygletUtils:
             + offset_h * car.fire_sprite.width * sin(radians(car.body.rotation))
             - offset_v * car.fire_sprite.height * cos(radians(car.body.rotation))
         )
+
+    @staticmethod
+    def draw_sensors(car: Car, batch: Batch):
+        # Calculate the end point of the line
+        car.metadata["sensors"] = {}
+        for sensor in car.sensors:
+            start_x, start_y = sensor.position[0], sensor.position[1]
+            rotation = sensor.rotation
+            end_x = start_x + sensor.length * cos(radians(rotation))
+            end_y = start_y + sensor.length * sin(radians(rotation))
+
+            line = ShapeUtils.get_line(start_x, start_y, end_x, end_y, batch=batch)
+
+            car.metadata["sensors"][str(sensor.angle_offset)] = line
