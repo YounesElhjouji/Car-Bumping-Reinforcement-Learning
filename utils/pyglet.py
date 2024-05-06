@@ -59,7 +59,7 @@ class PygletUtils:
     def draw_sensors(car: Car, batch: Batch):
         # Calculate the end point of the line
         car.metadata["sensors"] = {}
-        for sensor in car.sensors:
+        for sensor in car.wall_sensors + car.wall_sensors:
             start_x, start_y = sensor.position[0], sensor.position[1]
             rotation = sensor.rotation
             end_x = start_x + sensor.length * cos(radians(rotation))

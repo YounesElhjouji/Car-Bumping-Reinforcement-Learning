@@ -1,17 +1,33 @@
+from math import radians
 from bson import ObjectId
-
-from entities.body import Body
+import numpy as np
 
 
 class Sensor:
     length: int = 200
 
-    def __init__(self, body: Body, angle_offset: float, car_id: ObjectId) -> None:
-        self.position = body.rectangle.center
+    def __init__(
+        self,
+        position: np.ndarray,
+        rotation: float,
+        angle_offset: float,
+        car_id: ObjectId,
+    ) -> None:
+        self.position = position
         self.angle_offset = angle_offset
-        self.rotation = body.rotation + angle_offset
+        self.rotation = rotation + angle_offset
         self.car_id = car_id
 
-    def update_sensor(self, body: Body):
-        self.position = body.rectangle.center
-        self.rotation = body.rotation + self.angle_offset
+    def update_sensor(self, position: np.ndarray, rotation: float):
+        self.position = position
+        self.rotation = rotation + self.angle_offset
+
+    @property
+    def points(self) -> list[np.ndarray]:
+        line_start = self.position
+        line_end = (
+            line_start
+            + np.array([np.cos(radians(self.rotation)), np.sin(radians(self.rotation))])
+            * self.length
+        )
+        return [line_start, line_end]

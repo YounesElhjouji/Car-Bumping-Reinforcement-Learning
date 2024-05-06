@@ -39,6 +39,10 @@ if __name__ == "__main__":
             PygletUtils.set_fire_position(car)
             ShapeUtils.draw_debug_visuals(car=car, batch=PygletInterface.batch)
             SensingUtils.sense_walls(car, batch=PygletInterface.batch)
+            SensingUtils.sense_cars(
+                car=car, car_collection=collection, batch=PygletInterface.batch
+            )
             PygletUtils.draw_sensors(car=car, batch=PygletInterface.batch)
+        # SensingUtils.debug_line_intersection(batch=PygletInterface.batch)
 
     PygletInterface.start_game(on_update=on_update)

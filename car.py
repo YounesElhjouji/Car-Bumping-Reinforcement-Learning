@@ -28,13 +28,36 @@ class Car(object):
         )
         self.debug_visuals = {}
         self.metadata = {}  # Can be used by modules to store metadata
+        self.wall_sensors = self.create_sensors()
+        self.car_sensors = self.create_sensors()
         self.sensors: list[Sensor] = []
-        n_sensors = 7
-        for offset in np.linspace(-30, 30, n_sensors):
-            self.sensors.append(
-                Sensor(body=self.body, car_id=self.id_, angle_offset=offset)
+
+    def create_sensors(self) -> list[Sensor]:
+        sensors: list[Sensor] = []
+        front_sensors, back_sensors = 7, 3
+        for offset in np.linspace(-30, 30, front_sensors):
+            sensors.append(
+                Sensor(
+                    position=self.body.rectangle.center,
+                    rotation=self.body.rotation,
+                    car_id=self.id_,
+                    angle_offset=offset,
+                )
             )
+        for offset in np.linspace(150, 210, back_sensors):
+            sensors.append(
+                Sensor(
+                    position=self.body.rectangle.center,
+                    rotation=self.body.rotation,
+                    car_id=self.id_,
+                    angle_offset=offset,
+                )
+            )
+        return sensors
 
     def update_sensors(self):
-        for sensor in self.sensors:
-            sensor.update_sensor(self.body)
+        sensors = self.wall_sensors + self.car_sensors
+        for sensor in sensors:
+            sensor.update_sensor(
+                position=self.body.rectangle.center, rotation=self.body.rotation
+            )
