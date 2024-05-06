@@ -64,3 +64,7 @@ class TrigUtils:
                 return False  # No overlap, no collision
 
         return True  # All projections overlap, rectangles collide
+
+    @staticmethod
+    def get_distance(p1: np.ndarray, p2: np.ndarray) -> float:
+        return float(np.linalg.norm(p2 - p1))

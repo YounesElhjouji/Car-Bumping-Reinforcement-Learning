@@ -7,6 +7,7 @@ from entities.rectangle import Rectangle
 from entities.sensor import Sensor
 from entities.world import World
 from utils.shaper import ShapeUtils
+from utils.trigonometry import TrigUtils
 
 
 class SensingUtils:
@@ -82,16 +83,58 @@ class SensingUtils:
     @classmethod
     def sense_cars(cls, car: Car, car_collection: CarCollection, batch: Batch):
         car.metadata["car_sensor_detections"] = []
-        for rect in [c.body.rectangle for c in car_collection.cars if c.id_ != car.id_]:
-            for sensor in car.car_sensors:
+        car.metadata["bumper_sensor_detections"] = []
+        for other_car in [c for c in car_collection.cars if c.id_ != car.id_]:
+            rect = other_car.body.car_rect
+            if (
+                TrigUtils.get_distance(car.body.position, other_car.body.position)
+                > Sensor.length
+            ):
+                continue
+            for idx, sensor in enumerate(car.car_sensors):
                 intersection = cls.line_rectangle_collision(sensor, rect)
                 if intersection is None:
                     continue
 
-                point = ShapeUtils.get_point(
-                    intersection[0], intersection[1], color="purple", batch=batch
+                is_bumper = cls.sense_bumper(
+                    car=car,
+                    other=other_car,
+                    sensor_idx=idx,
+                    car_intersection=intersection,
+                    batch=batch,
                 )
-                car.metadata["car_sensor_detections"].append(point)
+                if not is_bumper:
+                    point = ShapeUtils.get_point(
+                        intersection[0], intersection[1], color="purple", batch=batch
+                    )
+                    car.metadata["car_sensor_detections"].append(point)
+
+    @classmethod
+    def sense_bumper(
+        cls,
+        car: Car,
+        other: Car,
+        sensor_idx: int,
+        car_intersection: np.ndarray,
+        batch: Batch,
+    ):
+        bumper_rect = other.body.bumper_rect
+        sensor = car.bumper_sensors[sensor_idx]
+        bumper_intersection = cls.line_rectangle_collision(sensor, bumper_rect)
+
+        # helper function returns if bumper is sensed without car obstruction
+        def is_bumper_visible():
+            car_distance = np.linalg.norm(sensor.position - car_intersection)
+            bumper_distance = np.linalg.norm(sensor.position - bumper_intersection)
+            return abs(bumper_distance - car_distance) < 2
+
+        if bumper_intersection is not None and is_bumper_visible():
+            point = ShapeUtils.get_point(
+                bumper_intersection[0], bumper_intersection[1], color="red", batch=batch
+            )
+            car.metadata["bumper_sensor_detections"].append(point)
+            return True
+        return False
 
     @classmethod
     def line_rectangle_collision(

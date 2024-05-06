@@ -1,3 +1,5 @@
+from random import randint
+from entities.world import World
 from entities.car_collection import CarCollection
 from entities.enums import Player
 from interfaces.pyglet_interface import PygletInterface, create_car
@@ -12,17 +14,17 @@ def add_cars() -> CarCollection:
     cars = []
     cars.append(create_car(position=[512, 300]))
     cars.append(create_car(position=[700, 300], rotation=90, player=Player.P2))
-    # for _ in range(31):
-    #     cars.append(
-    #         create_car(
-    #             position=[
-    #                 randint(20, World.size[0] - 20),
-    #                 randint(20, World.size[1] - 20),
-    #             ],
-    #             rotation=randint(0, 359),
-    #             player=Player.RANDOM,
-    #         )
-    #     )
+    for _ in range(15):
+        cars.append(
+            create_car(
+                position=[
+                    randint(20, World.size[0] - 20),
+                    randint(20, World.size[1] - 20),
+                ],
+                rotation=randint(0, 359),
+                player=Player.RANDOM,
+            )
+        )
     return CarCollection(cars=cars)
 
 

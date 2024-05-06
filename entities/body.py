@@ -2,6 +2,7 @@
 
 import numpy as np
 
+from entities.rectangle import Rectangle
 from utils.trigonometry import TrigUtils
 
 
@@ -34,19 +35,28 @@ class Body:
         self.turbo_cooldown = 4.0  # after each half second add a bit of fuel
         self.turbo_last_fuel = 0.0
         self.turbo_fuel = self.turbo_capacity
-
-        self.rectangle = TrigUtils.get_rotated_rectangle(
-            origin=position, width=width, height=height, angle=rotation
-        )
+        self.car_rect: Rectangle
+        self.bumper_rect: Rectangle
+        self.update_rectangles()
 
     @property
     def speed(self) -> float:
         return float(np.linalg.norm(self.velocity))
 
-    def update_rectangle(self):
-        self.rectangle = TrigUtils.get_rotated_rectangle(
+    def update_rectangles(self):
+        self.car_rect = TrigUtils.get_rotated_rectangle(
             origin=self.position,
             width=self.width,
             height=self.height,
+            angle=self.rotation,
+        )
+        self.bumper_rect = TrigUtils.get_rotated_rectangle(
+            origin=TrigUtils.rotate_point(
+                point=self.position + np.array([self.width * 5 / 6, 0]),
+                angle=self.rotation,
+                origin=self.position,
+            ),  # Add shift forward from center by 11/12 of width
+            height=self.height,
+            width=self.width / 6,
             angle=self.rotation,
         )

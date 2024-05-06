@@ -6,6 +6,7 @@ import webcolors
 
 from car import Car
 from entities.body import Body
+from entities.rectangle import Rectangle
 from utils.trigonometry import TrigUtils
 
 
@@ -18,7 +19,20 @@ class ShapeUtils:
             x=x,
             y=y,
             radius=cls.point_size,
-            color=webcolors.name_to_rgb(color),
+            color=cls.to_rgba(color),
+            batch=batch,
+        )
+
+    @staticmethod
+    def to_rgba(color: str) -> tuple[int, ...]:
+        rgb = webcolors.name_to_rgb(color)
+        return rgb + (128,)
+
+    @classmethod
+    def get_rectangle(cls, rect: Rectangle, color: str, batch: Batch):
+        return shapes.Polygon(
+            *[p.tolist() for p in rect.points],
+            color=cls.to_rgba(color),
             batch=batch,
         )
 
@@ -27,7 +41,7 @@ class ShapeUtils:
         px, py = car.body.position
         x, y = cls.get_center(car.body)
         center = cls.get_point(x=x, y=y, color="green", batch=batch)
-        pos = ShapeUtils.get_point(x=px, y=py, color="red", batch=batch)
+        pos = cls.get_point(x=px, y=py, color="red", batch=batch)
         body = car.body
         rect = TrigUtils.get_rotated_rectangle(
             origin=body.position,
@@ -35,16 +49,18 @@ class ShapeUtils:
             height=body.height,
             angle=body.rotation,
         )
-        # car.debug_visuals.update(
-        #     {
-        #         "pos": pos,
-        #         "center": center,
-        #         "points": [
-        #             cls.get_point(x=p[0], y=p[1], color="orange", batch=batch)
-        #             for p in rect.points
-        #         ],
-        #     }
-        # )
+        bumper = cls.get_rectangle(rect=car.body.bumper_rect, color="blue", batch=batch)
+        car.debug_visuals.update(
+            {
+                # "pos": pos,
+                # "center": center,
+                # "points": [
+                #     cls.get_point(x=p[0], y=p[1], color="orange", batch=batch)
+                #     for p in rect.points
+                # ],
+                "bumper": bumper
+            }
+        )
 
     @staticmethod
     def get_portion(body: Body, is_x: bool):
@@ -73,6 +89,6 @@ class ShapeUtils:
             x2=x2,
             y2=y2,
             width=width,
-            color=webcolors.name_to_rgb("black"),
+            color=cls.to_rgba("grey"),
             batch=batch,
         )

@@ -24,7 +24,6 @@ def on_update(dt, collection: CarCollection):
 
 
 def move(body: Body):
-    body.update_rectangle()
     body.max_steer = max(50 - 0.15 * body.speed, 5)
     bump_border(body)
     check_direction(body)
@@ -32,10 +31,11 @@ def move(body: Body):
         get_rotation(body)
     net_force = get_net_force(body)
     get_displacement(body, net_force)
+    body.update_rectangles()
 
 
 def bump_border(body: Body):
-    for point in body.rectangle.points:
+    for point in body.car_rect.points:
         is_bump = bump_corner(body, point)
         if is_bump:
             return
@@ -190,12 +190,12 @@ def check_collisions(collection: CarCollection):
     pairs = list(itertools.combinations(collection.cars, 2))
     for car1, car2 in pairs:
         body1, body2 = car1.body, car2.body
-        if TrigUtils.are_colliding(body1.rectangle, body2.rectangle):
+        if TrigUtils.are_colliding(body1.car_rect, body2.car_rect):
             bump_bodies(body1, body2)
 
 
 def bump_bodies(body1: Body, body2: Body):
-    rel_vector = body2.rectangle.center - body1.rectangle.center
+    rel_vector = body2.car_rect.center - body1.car_rect.center
     rel_direction = rel_vector / np.linalg.norm(rel_vector)
     rel_velocity = body2.velocity - body1.velocity
     collision_force = float(
