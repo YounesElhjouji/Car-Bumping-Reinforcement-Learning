@@ -12,6 +12,7 @@ from utils.sensing import SensingUtils
 drag_coefficient = 0.02
 friction_coefficient = 0.7
 bump_back = 1
+restitution = 0.9
 
 # Move the body
 
@@ -53,25 +54,23 @@ def get_net_force(body: Body) -> np.ndarray:
     force = get_xy(body.thrust, body.rotation, 1)
 
     if body.speed > 0:
+        # Add drag force
         drag = drag_coefficient * body.speed**2
         friction_force = body.direction * (
             drag + body.friction + abs(body.steer) * 0.05 * drag
         )
         force += get_xy(friction_force, body.rotation, -1)
 
+        # Add sideways friction
         sideways_vector = np.array(
             [-np.sin(np.radians(body.rotation)), np.cos(np.radians(body.rotation))]
         )
         sideways_velocity = np.dot(body.velocity, sideways_vector) * sideways_vector
         side_speed = np.linalg.norm(sideways_velocity)
-
         if side_speed > 0:
             side_direction = sideways_velocity / side_speed
             sideways_friction = -side_direction * 0.3 * side_speed**2
             force += sideways_friction
-
-    if np.linalg.norm(body.collision_force) > 0:
-        force += body.collision_force
 
     return force
 
@@ -110,7 +109,7 @@ def get_displacement(body: Body, net_force: np.ndarray):
     if body.speed < 1 and body.thrust == 0:
         body.velocity = np.array([0.0, 0.0])
     acceleration = net_force / body.mass
-    body.velocity = body.velocity + acceleration * World.dt
+    body.velocity += acceleration * World.dt
     body.position = body.position + body.velocity * World.dt
 
 
@@ -171,8 +170,6 @@ def refill_turbo(body: Body):
 
 
 def check_collisions(collection: CarCollection):
-    for car in collection.cars:
-        car.body.collision_force *= 0.1
     pairs = list(itertools.combinations(collection.cars, 2))
     for car1, car2 in pairs:
         body1, body2 = car1.body, car2.body
@@ -184,30 +181,22 @@ def check_collisions(collection: CarCollection):
 
 
 def bump_bodies(body1: Body, body2: Body, normal: np.ndarray, depth: float):
-    rel_velocity = body2.velocity - body1.velocity
-    collision_force = float(
-        0.5 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
-    )
-
     body1.position -= np.array(normal * depth / 2, dtype=np.int32)
     body2.position += np.array(normal * depth / 2, dtype=np.int32)
-    #
-    # # Remove the component of the velocity that is directed towards the other body
-    # body1.velocity -= max(0, np.dot(body1.velocity, rel_direction)) * rel_direction
-    # body2.velocity -= max(0, np.dot(body2.velocity, -rel_direction)) * -rel_direction
 
-    set_collision_force(body1, collision_force, normal, sign=-1)
-    set_collision_force(body2, collision_force, normal, sign=1)
+    apply_impulse(body1, body2, normal)
 
 
 def bump_wall(body: Body, normal: np.ndarray, depth: float):
-    collision_force = 10 * body.mass * body.speed
     body.position -= np.array(normal * depth / 2, dtype=np.int32)
-    set_collision_force(body, collision_force, normal, sign=-1)
+    impulse = -(1 + restitution) * np.dot(-body.velocity, normal) * normal
+    body.velocity -= impulse
 
 
-def set_collision_force(
-    body: Body, collision_force: float, rel_direction: np.ndarray, sign: int
-):
-    collision_force = max(collision_force, 100)
-    body.collision_force += sign * collision_force * rel_direction
+def apply_impulse(body1: Body, body2: Body, normal: np.ndarray):
+    rel_velocity = body2.velocity - body1.velocity
+    j = -(1 + restitution) * np.dot(rel_velocity, normal)
+    j /= (1 / body1.mass) + (1 / body2.mass)
+
+    body1.velocity -= j / body1.mass * normal
+    body2.velocity += j / body2.mass * normal

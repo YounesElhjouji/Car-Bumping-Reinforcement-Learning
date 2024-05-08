@@ -23,7 +23,6 @@ class Body:
         self.direction = 1
         self.rotation: float = rotation
 
-        self.collision_force = np.array([0.0, 0.0])
         self.thrust = 0.0
         self.steer = 0.0
         self.mass = 10
