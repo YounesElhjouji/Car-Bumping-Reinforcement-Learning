@@ -1,8 +1,9 @@
+from math import inf
 import numpy as np
 from entities.rectangle import Rectangle
 
 
-class TrigUtils:
+class Geometry:
     @classmethod
     def translate_point(cls, point, vector):
         return point + vector
@@ -20,6 +21,10 @@ class TrigUtils:
     @classmethod
     def scale_point(cls, point, scale_factor, origin=np.array([0, 0])):
         return origin + scale_factor * (point - origin)
+
+    @staticmethod
+    def normalize_vector(vec: np.ndarray) -> np.ndarray:
+        return vec / np.linalg.norm(vec)
 
     @classmethod
     def get_rotated_rectangle(cls, origin, width, height, angle) -> Rectangle:
@@ -43,27 +48,39 @@ class TrigUtils:
         projected = [np.dot(vertex, axis) for vertex in polygon]
         return min(projected), max(projected)
 
-    @staticmethod
-    def are_colliding(rect1: Rectangle, rect2: Rectangle) -> bool:
+    @classmethod
+    def are_colliding(
+        cls, rect1: Rectangle, rect2: Rectangle
+    ) -> tuple[bool, np.ndarray, float]:
         edges = []
+        normal = np.array([0.0, 0.0])
+        depth = inf
         for rect in (rect1, rect2):
             points = rect.points
             for i in range(len(points)):
                 edge_vec = points[i] - points[i - 1]
-                # Perpendicular vector to the edge (normal)
-                normal = np.array([-edge_vec[1], edge_vec[0]])
-                edges.append(normal)
+                axis = np.array([-edge_vec[1], edge_vec[0]])
+                axis = cls.normalize_vector(axis)
+                edges.append(axis)
 
         # For each axis (normal to the edges), project and check for overlap
         for axis in edges:
-            p1_min, p1_max = TrigUtils.project_polygon(axis, rect1.points)
-            p2_min, p2_max = TrigUtils.project_polygon(axis, rect2.points)
+            p1_min, p1_max = Geometry.project_polygon(axis, rect1.points)
+            p2_min, p2_max = Geometry.project_polygon(axis, rect2.points)
 
-            # Check if there is a gap between the projections
             if p1_max < p2_min or p2_max < p1_min:
-                return False  # No overlap, no collision
+                return False, normal, depth
 
-        return True  # All projections overlap, rectangles collide
+            axis_depth = min(p2_max - p1_min, p1_max - p2_min)
+            if axis_depth < depth:
+                normal = axis
+                depth = axis_depth
+
+        # Fix normal direction to be from rect2 to rect1
+        direction = rect2.center - rect1.center
+        if np.dot(direction, normal) < 0:
+            normal = -normal
+        return True, normal, depth  # All projections overlap, rectangles collide
 
     @staticmethod
     def get_distance(p1: np.ndarray, p2: np.ndarray) -> float:

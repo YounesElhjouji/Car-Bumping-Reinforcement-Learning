@@ -3,7 +3,7 @@
 import numpy as np
 
 from entities.rectangle import Rectangle
-from utils.trigonometry import TrigUtils
+from utils.geometry import Geometry
 
 
 friction_coefficient = 0.7
@@ -44,14 +44,14 @@ class Body:
         return float(np.linalg.norm(self.velocity))
 
     def update_rectangles(self):
-        self.car_rect = TrigUtils.get_rotated_rectangle(
+        self.car_rect = Geometry.get_rotated_rectangle(
             origin=self.position,
             width=self.width,
             height=self.height,
             angle=self.rotation,
         )
-        self.bumper_rect = TrigUtils.get_rotated_rectangle(
-            origin=TrigUtils.rotate_point(
+        self.bumper_rect = Geometry.get_rotated_rectangle(
+            origin=Geometry.rotate_point(
                 point=self.position + np.array([self.width * 5 / 6, 0]),
                 angle=self.rotation,
                 origin=self.position,

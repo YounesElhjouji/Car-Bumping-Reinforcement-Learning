@@ -7,7 +7,7 @@ import webcolors
 from car import Car
 from entities.body import Body
 from entities.rectangle import Rectangle
-from utils.trigonometry import TrigUtils
+from utils.geometry import Geometry
 
 
 class ShapeUtils:
@@ -43,7 +43,7 @@ class ShapeUtils:
         center = cls.get_point(x=x, y=y, color="green", batch=batch)
         pos = cls.get_point(x=px, y=py, color="red", batch=batch)
         body = car.body
-        rect = TrigUtils.get_rotated_rectangle(
+        rect = Geometry.get_rotated_rectangle(
             origin=body.position,
             width=body.width,
             height=body.height,

@@ -7,7 +7,7 @@ from entities.rectangle import Rectangle
 from entities.sensor import Sensor
 from entities.world import World
 from utils.shaper import ShapeUtils
-from utils.trigonometry import TrigUtils
+from utils.geometry import Geometry
 
 
 class SensingUtils:
@@ -87,7 +87,7 @@ class SensingUtils:
         for other_car in [c for c in car_collection.cars if c.id_ != car.id_]:
             rect = other_car.body.car_rect
             if (
-                TrigUtils.get_distance(car.body.position, other_car.body.position)
+                Geometry.get_distance(car.body.position, other_car.body.position)
                 > Sensor.length
             ):
                 continue

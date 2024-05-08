@@ -6,7 +6,8 @@ from entities.world import World
 import numpy as np
 
 from entities.body import Body
-from utils.trigonometry import TrigUtils
+from utils.geometry import Geometry
+from utils.sensing import SensingUtils
 
 drag_coefficient = 0.02
 friction_coefficient = 0.7
@@ -35,26 +36,11 @@ def move(body: Body):
 
 
 def bump_border(body: Body):
-    for point in body.car_rect.points:
-        is_bump = bump_corner(body, point)
-        if is_bump:
+    for wall in SensingUtils.get_wall_rectangles():
+        is_collision, normal, depth = Geometry.are_colliding(body.car_rect, wall)
+        if is_collision:
+            bump_wall(body, normal, depth)
             return
-
-
-def bump_corner(body: Body, point: np.ndarray) -> bool:
-    if point[0] >= World.size[0]:
-        bump_wall(body, np.array([1.0, 0.0]))
-        return True
-    if point[0] <= 0:
-        bump_wall(body, np.array([-1.0, 0.0]))
-        return True
-    if point[1] >= World.size[1]:
-        bump_wall(body, np.array([0.0, 1.0]))
-        return True
-    if point[1] <= 0:
-        bump_wall(body, np.array([0.0, -1.0]))
-        return True
-    return False
 
 
 def get_net_force(body: Body) -> np.ndarray:
@@ -190,31 +176,34 @@ def check_collisions(collection: CarCollection):
     pairs = list(itertools.combinations(collection.cars, 2))
     for car1, car2 in pairs:
         body1, body2 = car1.body, car2.body
-        if TrigUtils.are_colliding(body1.car_rect, body2.car_rect):
-            bump_bodies(body1, body2)
+        is_collision, normal, depth = Geometry.are_colliding(
+            body1.car_rect, body2.car_rect
+        )
+        if is_collision:
+            bump_bodies(body1, body2, normal, depth)
 
 
-def bump_bodies(body1: Body, body2: Body):
-    rel_vector = body2.car_rect.center - body1.car_rect.center
-    rel_direction = rel_vector / np.linalg.norm(rel_vector)
+def bump_bodies(body1: Body, body2: Body, normal: np.ndarray, depth: float):
     rel_velocity = body2.velocity - body1.velocity
     collision_force = float(
-        5 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
+        0.5 * (body1.mass + body2.mass) * np.linalg.norm(rel_velocity)
     )
 
-    # Remove the component of the velocity that is directed towards the other body
-    body1.velocity -= max(0, np.dot(body1.velocity, rel_direction)) * rel_direction
-    body2.velocity -= max(0, np.dot(body2.velocity, -rel_direction)) * -rel_direction
+    body1.position -= np.array(normal * depth / 2, dtype=np.int32)
+    body2.position += np.array(normal * depth / 2, dtype=np.int32)
+    #
+    # # Remove the component of the velocity that is directed towards the other body
+    # body1.velocity -= max(0, np.dot(body1.velocity, rel_direction)) * rel_direction
+    # body2.velocity -= max(0, np.dot(body2.velocity, -rel_direction)) * -rel_direction
 
-    set_collision_force(body1, collision_force, rel_direction, sign=-1)
-    set_collision_force(body2, collision_force, rel_direction, sign=1)
+    set_collision_force(body1, collision_force, normal, sign=-1)
+    set_collision_force(body2, collision_force, normal, sign=1)
 
 
-def bump_wall(body: Body, rel_direction: np.ndarray):
-    collision_force = 80 * body.mass * body.speed
-    body.velocity -= max(0, np.dot(body.velocity, rel_direction)) * rel_direction
-    body.thrust = 0
-    set_collision_force(body, collision_force, rel_direction, sign=-1)
+def bump_wall(body: Body, normal: np.ndarray, depth: float):
+    collision_force = 10 * body.mass * body.speed
+    body.position -= np.array(normal * depth / 2, dtype=np.int32)
+    set_collision_force(body, collision_force, normal, sign=-1)
 
 
 def set_collision_force(
