@@ -5,3 +5,4 @@ class Player(Enum):
     P1 = auto()
     P2 = auto()
     RANDOM = auto()
+    AI = auto()

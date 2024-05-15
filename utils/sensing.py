@@ -69,16 +69,20 @@ class SensingUtils:
     @classmethod
     def sense_walls(cls, car: Car, batch: Batch):
         car.metadata["wall_sensor_detections"] = []
-        for rect in cls.get_wall_rectangles():
-            for sensor in car.wall_sensors:
+
+        for sensor in car.wall_sensors:
+            value = 1.0  # distance to closest wall [0.0, 1.0]
+            for rect in cls.get_wall_rectangles():
                 intersection = cls.line_rectangle_collision(sensor, rect)
                 if intersection is None:
                     continue
-
+                distance = Geometry.get_distance(car.body.car_rect.center, intersection)
+                value = min(value, distance / sensor.length)
                 point = ShapeUtils.get_point(
                     intersection[0], intersection[1], color="purple", batch=batch
                 )
                 car.metadata["wall_sensor_detections"].append(point)
+            sensor.value = value
 
     @classmethod
     def sense_cars(cls, car: Car, car_collection: CarCollection, batch: Batch):

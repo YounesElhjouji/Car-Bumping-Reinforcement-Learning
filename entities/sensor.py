@@ -1,5 +1,4 @@
 from math import radians
-from bson import ObjectId
 import numpy as np
 
 
@@ -11,12 +10,11 @@ class Sensor:
         position: np.ndarray,
         rotation: float,
         angle_offset: float,
-        car_id: ObjectId,
     ) -> None:
         self.position = position
         self.angle_offset = angle_offset
         self.rotation = rotation + angle_offset
-        self.car_id = car_id
+        self.value: float = 1.0  # distance from the wall [0, 1]
 
     def update_sensor(self, position: np.ndarray, rotation: float):
         self.position = position

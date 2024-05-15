@@ -1,5 +1,7 @@
 from math import atan2, cos, degrees, sin, tan
 import itertools
+from car import Car
+from entities.action import Action
 from entities.car_collection import CarCollection
 from entities.world import World
 
@@ -17,39 +19,57 @@ restitution = 0.9
 # Move the body
 
 
-def on_update(dt, collection: CarCollection):
-    World.current_time += dt
+def on_update(collection: CarCollection):
+    World.current_time += World.dt
     check_collisions(collection)
     for car in collection.cars:
-        move(car.body)
+        move(car)
         refill_turbo(car.body)
 
 
-def move(body: Body):
+def update_car(car: Car, action: Action):
+    if action in [Action.NONE, Action.FORWARD, Action.BACKWARD]:
+        reverse_steer(car.body)
+    if action in [Action.FORWARD, Action.FORWARD_LEFT, Action.FORWARD_RIGHT]:
+        go_forward(car.body)
+    if action in [Action.BACKWARD, Action.BACKWARD_LEFT, Action.BACKWARD_RIGHT]:
+        go_backwards(car.body)
+    if action in [Action.LEFT, Action.FORWARD_LEFT, Action.BACKWARD_LEFT]:
+        turn_left(car.body)
+    if action in [Action.RIGHT, Action.FORWARD_RIGHT, Action.BACKWARD_RIGHT]:
+        turn_right(car.body)
+    move(car)
+
+
+def move(car: Car):
+    body = car.body
     body.max_steer = max(50 - 0.15 * body.speed, 5)
-    bump_border(body)
+    bump_border(car)
     check_direction(body)
     if body.steer != 0:
         get_rotation(body)
     net_force = get_net_force(body)
     get_displacement(body, net_force)
     body.update_rectangles()
+    car.reward_speed()
 
 
-def bump_border(body: Body):
+def bump_border(car: Car):
+    body = car.body
     for wall in SensingUtils.get_wall_rectangles():
         is_collision, normal, depth = Geometry.are_colliding(body.car_rect, wall)
         if is_collision:
+            car.punish_wall_bump()
             bump_wall(body, normal, depth)
             return
 
 
 def get_net_force(body: Body) -> np.ndarray:
-    # break when thrusting in direction opposite to movement
-    if (body.thrust > 0 and body.direction == -1) or (
-        body.thrust < 0 and body.direction == 1
-    ):
-        body.thrust *= 2
+    # # break when thrusting in direction opposite to movement
+    # if (body.thrust > 0 and body.direction == -1) or (
+    #     body.thrust < 0 and body.direction == 1
+    # ):
+    #     body.thrust *= 2
 
     force = get_xy(body.thrust, body.rotation, 1)
 
@@ -78,9 +98,11 @@ def get_net_force(body: Body) -> np.ndarray:
 def get_rotation(body: Body):
     turning_radius = body.width / tan(np.radians(body.steer))
     angular_velocity = body.speed / turning_radius
-    body.rotation += np.degrees(angular_velocity) * World.dt
+    rotation_diff = np.degrees(angular_velocity) * World.dt
+    velocity_rotation = body.rotation + rotation_diff / 2
+    body.rotation += rotation_diff
     body.rotation = body.rotation % 360
-    body.velocity = get_xy(body.speed, body.rotation, body.direction)
+    body.velocity = get_xy(body.speed, velocity_rotation, body.direction)
 
 
 def get_xy(value, rotation, direction):
@@ -145,7 +167,7 @@ def turn_right(body: Body):
 
 
 def reverse_steer(body: Body):
-    body.steer += 100 * World.dt if body.steer < 0 else -100 * World.dt
+    body.steer = 0.0
 
 
 def cancel_thrust(body: Body):

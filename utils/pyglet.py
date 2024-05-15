@@ -24,7 +24,7 @@ class PygletUtils:
         fire_sprite.anchor_x = fire_sprite.width
         fire_sprite.anchor_y = fire_sprite.height // 2
         fire_sprite.scale = 0.6 * car_height / fire_sprite.height
-        fire_sprite.visible = True
+        fire_sprite.visible = False
         return fire_sprite
 
     @staticmethod
@@ -59,7 +59,7 @@ class PygletUtils:
     def draw_sensors(car: Car, batch: Batch):
         # Calculate the end point of the line
         car.metadata["sensors"] = {}
-        for sensor in car.wall_sensors + car.wall_sensors:
+        for sensor in car.wall_sensors + car.car_sensors:
             start_x, start_y = sensor.position[0], sensor.position[1]
             rotation = sensor.rotation
             end_x = start_x + sensor.length * cos(radians(rotation))
@@ -68,3 +68,5 @@ class PygletUtils:
             line = ShapeUtils.get_line(start_x, start_y, end_x, end_y, batch=batch)
 
             car.metadata["sensors"][str(sensor.angle_offset)] = line
+
+        # print(f"Value of sensors is {[sensor.value for sensor in car.wall_sensors]}")
