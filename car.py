@@ -36,7 +36,8 @@ class Car(object):
         self.bumper_sensors = self.create_sensors()
         self.sensors: list[Sensor] = []
         self.reward = 0
-        self.agent = Agent() if agent is None else agent
+        self.agent = Agent([14, 9]) if agent is None else agent
+        self.score = 0
 
     def create_sensors(self) -> list[Sensor]:
         sensors: list[Sensor] = []
@@ -67,11 +68,11 @@ class Car(object):
             )
 
     def punish_wall_bump(self):
-        self.reward -= 10
+        self.reward -= 1
         # print(f"Touched the wall, reward {self.reward}")
 
     def reward_speed(self):
-        self.reward += (self.body.speed - 50) / 100
+        self.reward += (self.body.speed - 50) / 300
         # print(f"Speed reward {self.reward}")
 
     def get_state(self):
@@ -85,3 +86,6 @@ class Car(object):
 
     def get_agent(self):
         return self.agent
+
+    def update_score(self):
+        self.score = self.score + self.reward

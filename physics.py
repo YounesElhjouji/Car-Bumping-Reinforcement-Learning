@@ -65,20 +65,15 @@ def bump_border(car: Car):
 
 
 def get_net_force(body: Body) -> np.ndarray:
-    # # break when thrusting in direction opposite to movement
-    # if (body.thrust > 0 and body.direction == -1) or (
-    #     body.thrust < 0 and body.direction == 1
-    # ):
-    #     body.thrust *= 2
-
     force = get_xy(body.thrust, body.rotation, 1)
-
     if body.speed > 0:
         # Add drag force
         drag = drag_coefficient * body.speed**2
         friction_force = body.direction * (
             drag + body.friction + abs(body.steer) * 0.05 * drag
         )
+        if body.direction == -1:
+            friction_force *= 5.5
         force += get_xy(friction_force, body.rotation, -1)
 
         # Add sideways friction

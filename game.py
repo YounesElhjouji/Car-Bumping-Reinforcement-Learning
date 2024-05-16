@@ -1,5 +1,5 @@
 from random import randint
-from entities.action import State
+
 from entities.car_collection import CarCollection
 from entities.enums import Player
 from entities.world import World
@@ -55,27 +55,41 @@ def old_game():
 
 def train():
     cars = []
-    agent = Agent()
-    for _ in range(10):
-        cars.append(
-            create_car(
-                position=[
-                    randint(20, World.size[0] - 20),
-                    randint(20, World.size[1] - 20),
-                ],
-                rotation=randint(0, 359),
-                player=Player.AI,
-                agent=agent,
+    archs = [
+        [14, 16, 9],
+        [14, 32, 9],
+        [14, 128, 9],
+        [14, 64, 64, 9],
+        [14, 64, 64, 64, 9],
+        [14, 16, 16, 9],
+        [14, 8, 8, 8, 9],
+        [14, 8, 8, 9],
+    ]
+
+    for arch in archs:
+        for _ in range(2):
+            cars.append(
+                create_car(
+                    position=[
+                        randint(20, World.size[0] - 20),
+                        randint(20, World.size[1] - 20),
+                    ],
+                    rotation=randint(0, 359),
+                    player=Player.AI,
+                    agent=Agent(arch),
+                )
             )
-        )
 
     def on_update(dt):
-        nonlocal agent
         World.current_time += dt
 
         if World.current_time > 60:
             print("minute has passed, long training ... ")
-            agent.train_batch()
+            for car in cars:
+                agent = car.agent
+                agent.train_batch()
+                print(f"Score: {car.score}, Arch: {car.agent.model.arch}")
+                car.score = 0
             World.current_time = 0
             for car in cars:
                 car.body.position = [
@@ -86,7 +100,8 @@ def train():
 
         for car in cars:
             car.reward = 0
-            state: State = car.get_state()
+            agent = car.agent
+            state = car.get_state()
             action = agent.get_action(state)
 
             physics.update_car(car, action)
@@ -94,6 +109,7 @@ def train():
             car.update_sensors()
             PygletUtils.set_car_sprite_position(car)
             SensingUtils.sense_walls(car, batch=PygletInterface.batch)
+            car.update_score()
 
             state_new = car.get_state()
             reward = car.reward

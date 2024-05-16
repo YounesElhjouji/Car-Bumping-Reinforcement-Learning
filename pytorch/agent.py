@@ -15,10 +15,11 @@ GAMMA = 0.9
 
 
 class Agent:
-    def __init__(self) -> None:
+    def __init__(self, arch: list[int]) -> None:
         self.n_games = 0
         self.memory = deque(maxlen=MEMORY_SIZE)
-        self.model = QNetModel(14, 256, 128, 9)
+        self.model = QNetModel(arch)
+        print(self.model.layers)
         self.trainer = QNetTrainer(self.model, lr=LR, gamma=GAMMA)
 
     def get_action(self, state: State) -> Action:

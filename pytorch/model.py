@@ -1,20 +1,22 @@
 import torch
 import torch.nn as nn
+from torch.nn.functional import relu
 
 
 class QNetModel(nn.Module):
-    def __init__(self, input_size: int, hidden_1: int, hidden_2: int, output_size: int):
+    def __init__(self, arch: list[int]):
         super().__init__()
-        self.l1 = nn.Linear(input_size, hidden_1)
-        self.l2 = nn.Linear(hidden_1, hidden_2)
-        self.l3 = nn.Linear(hidden_2, output_size)
+        self.arch = arch
+        self.layers = nn.ModuleList()
+        for i in range(len(arch) - 1):
+            inp, out = arch[i], arch[i + 1]
+            self.layers.append(nn.Linear(inp, out))
 
     def forward(self, x):
-        x = self.l1(x)
-        x = nn.functional.relu(x)
-        x = self.l2(x)
-        x = nn.functional.relu(x)
-        x = self.l3(x)
+        for layer in self.layers[:-1]:
+            x = layer(x)
+            x = relu(x)
+        x = self.layers[-1](x)  # output layer
         return x
 
     def save(self, file_path: str = "../resources/model.pth"):
@@ -65,7 +67,7 @@ class QNetTrainer:
 
 
 if __name__ == "__main__":
-    model = QNetModel(3, 2)
+    model = QNetModel([3, 2])
     input_tensor = torch.tensor([0.5, 1.0, 0.0], dtype=torch.float)
     output_tensor = model(input_tensor)
     print(f"output {output_tensor}")
