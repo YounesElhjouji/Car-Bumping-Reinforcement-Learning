@@ -8,8 +8,8 @@ import torch
 from entities.action import Action, State
 from pytorch.model import QNetModel, QNetTrainer
 
-MEMORY_SIZE = 100_000
-BATCH_SIZE = 1000
+MEMORY_SIZE = 10000
+BATCH_SIZE = 100
 LR = 0.001
 GAMMA = 0.9
 
@@ -17,13 +17,14 @@ GAMMA = 0.9
 class Agent:
     def __init__(self, arch: list[int]) -> None:
         self.n_games = 0
-        self.memory = deque(maxlen=MEMORY_SIZE)
         self.model = QNetModel(arch)
+        self.target_model = QNetModel(arch)
+        self.memory = deque(maxlen=MEMORY_SIZE)
         print(self.model.layers)
-        self.trainer = QNetTrainer(self.model, lr=LR, gamma=GAMMA)
+        self.trainer = QNetTrainer(self.model, self.target_model, lr=LR, gamma=GAMMA)
 
     def get_action(self, state: State) -> Action:
-        epsilon = 2  # 80 - self.n_games
+        epsilon = max(5, 80 - self.n_games)
         if randint(0, 200) < epsilon:
             action = choice(list(Action))
             # print(f"Random action: {action}")
@@ -48,7 +49,7 @@ class Agent:
             next_state=state_new,
             done=done,
         )
-        self.memory.append((state_old, state_new, action, reward, done))
+        self.memory.append((state_old, state_new, action_arr, reward, done))
 
     def train_batch(self):
         self.n_games += 1
@@ -56,7 +57,6 @@ class Agent:
             sample = random.sample(self.memory, BATCH_SIZE)
         else:
             sample = self.memory
-
             states_old, states_new, actions, rewards, dones = zip(*sample)
             self.trainer.train_step(
                 state=states_old,
@@ -65,3 +65,8 @@ class Agent:
                 reward=rewards,
                 done=dones,
             )
+
+    def update_target_network(self):
+        self.target_model.load_state_dict(
+            self.model.state_dict()
+        )  # Update target network

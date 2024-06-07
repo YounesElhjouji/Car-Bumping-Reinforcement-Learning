@@ -24,14 +24,18 @@ class QNetModel(nn.Module):
 
 
 class QNetTrainer:
-    def __init__(self, model, lr, gamma):
+    def __init__(self, model, target_model, lr, gamma):
         self.lr = lr
         self.gamma = gamma
         self.model = model
+        self.target_model = target_model
         self.optimizer = torch.optim.Adam(model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
     def train_step(self, state, action, reward, next_state, done):
+        # print(
+        #     f"State: {state}, Action: {action}, Reward: {reward}, Next state: {next_state}"
+        # )
         state = torch.tensor(state, dtype=torch.float)
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
@@ -54,13 +58,14 @@ class QNetTrainer:
             Q_new = reward[idx]
             if not done[idx]:
                 Q_new = reward[idx] + self.gamma * torch.max(
-                    self.model(next_state[idx])
+                    self.target_model(next_state[idx])
                 )
 
             target[idx][torch.argmax(action[idx]).item()] = Q_new
 
         self.optimizer.zero_grad()
         loss = self.criterion(target, pred)
+        # print(f"Qnew: {Q_new}, target: {target}, pred: {pred}, loss {loss}")
         loss.backward()
 
         self.optimizer.step()

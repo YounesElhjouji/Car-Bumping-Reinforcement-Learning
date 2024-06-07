@@ -6,6 +6,7 @@ from entities.action import State
 from entities.enums import Player
 from entities.body import Body
 from entities.sensor import Sensor
+from entities.world import World
 from pytorch.agent import Agent
 
 
@@ -41,7 +42,7 @@ class Car(object):
 
     def create_sensors(self) -> list[Sensor]:
         sensors: list[Sensor] = []
-        front_sensors, back_sensors = 7, 3
+        front_sensors, back_sensors = 2, 2
         for offset in np.linspace(-30, 30, front_sensors):
             sensors.append(
                 Sensor(
@@ -68,19 +69,21 @@ class Car(object):
             )
 
     def punish_wall_bump(self):
-        self.reward -= 1
+        self.reward -= 1.0
         # print(f"Touched the wall, reward {self.reward}")
 
     def reward_speed(self):
-        self.reward += (self.body.speed - 50) / 300
+        if self.body.speed > 10 and self.body.direction == 1.0:
+            self.reward += 0.1
+        # self.reward += (self.body.speed - 50) / 100
         # print(f"Speed reward {self.reward}")
 
     def get_state(self):
         return State(
-            x=self.body.position[0],
-            y=self.body.position[1],
-            vx=self.body.velocity[0],
-            vy=self.body.velocity[1],
+            x=self.body.position[0] / World.size[0],
+            y=self.body.position[1] / World.size[1],
+            speed=self.body.speed / World.size[1],
+            direction=self.body.direction,
             wall_sensors=[sensor.value for sensor in self.wall_sensors],
         )
 

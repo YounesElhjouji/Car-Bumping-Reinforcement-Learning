@@ -82,7 +82,7 @@ class SensingUtils:
                     intersection[0], intersection[1], color="purple", batch=batch
                 )
                 car.metadata["wall_sensor_detections"].append(point)
-            sensor.value = value
+            sensor.value = 1.0 - value
 
     @classmethod
     def sense_cars(cls, car: Car, car_collection: CarCollection, batch: Batch):

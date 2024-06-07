@@ -1,3 +1,5 @@
+import numpy as np
+import matplotlib.pyplot as plt
 from random import randint
 
 from entities.car_collection import CarCollection
@@ -56,18 +58,20 @@ def old_game():
 def train():
     cars = []
     archs = [
-        [14, 16, 9],
-        [14, 32, 9],
-        [14, 128, 9],
-        [14, 64, 64, 9],
-        [14, 64, 64, 64, 9],
-        [14, 16, 16, 9],
-        [14, 8, 8, 8, 9],
-        [14, 8, 8, 9],
+        [8, 16, 9],
+        [8, 32, 9],
+        [8, 64, 9],
+        [8, 128, 9],
+        [8, 256, 9],
+        [8, 512, 9],
+        [8, 128, 32, 9],
+        [8, 9],
     ]
-
+    scores = []
+    gen = 0
+    batch_ids = []
     for arch in archs:
-        for _ in range(2):
+        for i in range(2):
             cars.append(
                 create_car(
                     position=[
@@ -79,17 +83,59 @@ def train():
                     agent=Agent(arch),
                 )
             )
+            if i == 0:
+                batch_ids.append(cars[-1].id_)
+
+    # cars.append(create_car(position=[512, 300], agent=Agent([8, 8, 9])))
+
+    # Initialize the plot
+    fig, ax = plt.subplots()
+    car_scores = {car.id_: [] for car in cars}
+    car_lines = {
+        car.id_: ax.plot(
+            [],
+            [],
+            label=f"{car.agent.model.arch} {'nob' if car.id_ not in batch_ids else ''}",
+        )[0]
+        for car in cars
+    }
+    ax.legend()
+
+    def update_plot():
+        for car in cars:
+            car_lines[car.id_].set_data(
+                range(len(car_scores[car.id_])), car_scores[car.id_]
+            )
+        ax.relim()
+        ax.set_ylim(
+            -50,
+            max(10, max((max(scores) for scores in car_scores.values()), default=10)),
+        )
+        ax.autoscale_view()
+        plt.draw()
+        plt.pause(0.001)
 
     def on_update(dt):
+        nonlocal gen, scores
         World.current_time += dt
 
-        if World.current_time > 60:
-            print("minute has passed, long training ... ")
+        if World.current_time > 20:
+            gen += 1
+            print(f"Generation {gen}")
+            scores.append(int(np.mean([car.score for car in cars])))
+            for car in cars:
+                car_scores[car.id_].append(car.score)
+            update_plot()
             for car in cars:
                 agent = car.agent
-                agent.train_batch()
-                print(f"Score: {car.score}, Arch: {car.agent.model.arch}")
+                agent.n_games += 1
+                if car.id_ in batch_ids:
+                    agent.train_batch()
+
+                agent.update_target_network()
+                update_plot()
                 car.score = 0
+            print(f"Average scores: {scores}")
             World.current_time = 0
             for car in cars:
                 car.body.position = [

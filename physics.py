@@ -61,7 +61,6 @@ def bump_border(car: Car):
         if is_collision:
             car.punish_wall_bump()
             bump_wall(body, normal, depth)
-            return
 
 
 def get_net_force(body: Body) -> np.ndarray:
@@ -72,8 +71,6 @@ def get_net_force(body: Body) -> np.ndarray:
         friction_force = body.direction * (
             drag + body.friction + abs(body.steer) * 0.05 * drag
         )
-        if body.direction == -1:
-            friction_force *= 5.5
         force += get_xy(friction_force, body.rotation, -1)
 
         # Add sideways friction
