@@ -3,14 +3,14 @@ from math import sin, cos, radians
 from pyglet.resource import Loader
 from pyglet.sprite import Sprite
 
-from car import Car
-from utils.shaper import ShapeUtils
+from game.car import Car
+from game.utils.shaper import ShapeUtils
 
 
 class PygletUtils:
     @staticmethod
     def create_car_sprite(width: int, batch: Batch) -> Sprite:
-        my_image = Loader(path="resources").image(name="car1.png")
+        my_image = Loader(path="../resources").image(name="car1.png")
         car_sprite: Sprite = Sprite(img=my_image, batch=batch)
         car_sprite.scale = width / car_sprite.width
         car_sprite.image.anchor_x = car_sprite.width // 2
@@ -19,7 +19,7 @@ class PygletUtils:
 
     @staticmethod
     def create_fire_sprite(car_height: int, batch: Batch) -> Sprite:
-        my_image = Loader(path="resources").image(name="fire.png")
+        my_image = Loader(path="../resources").image(name="fire.png")
         fire_sprite = Sprite(my_image, batch=batch)
         fire_sprite.anchor_x = fire_sprite.width
         fire_sprite.anchor_y = fire_sprite.height // 2

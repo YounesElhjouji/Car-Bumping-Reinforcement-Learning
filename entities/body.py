@@ -3,7 +3,7 @@
 import numpy as np
 
 from entities.rectangle import Rectangle
-from utils.geometry import Geometry
+from game.utils.geometry import Geometry
 
 
 friction_coefficient = 0.7

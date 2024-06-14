@@ -4,10 +4,10 @@ from math import sin, cos, radians
 from pyglet import shapes
 import webcolors
 
-from car import Car
+from game.car import Car
 from entities.body import Body
 from entities.rectangle import Rectangle
-from utils.geometry import Geometry
+from game.utils.geometry import Geometry
 
 
 class ShapeUtils:

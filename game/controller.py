@@ -1,10 +1,10 @@
 from random import randint, random
 from pyglet.window import key
-from car import Car
+from game.car import Car
 from entities.enums import Player
 from entities.world import World
-from interfaces.pyglet_interface import PygletInterface
-import physics
+from game.pyglet_interface import PygletInterface
+import game.physics as physics
 
 from dataclasses import dataclass
 

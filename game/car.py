@@ -7,7 +7,7 @@ from entities.enums import Player
 from entities.body import Body
 from entities.sensor import Sensor
 from entities.world import World
-from pytorch.agent import Agent
+from dqn.agent import Agent
 
 
 class Car(object):
@@ -69,13 +69,14 @@ class Car(object):
             )
 
     def punish_wall_bump(self):
-        self.reward -= 1.0
+        pass
+        # self.reward -= 1.0
         # print(f"Touched the wall, reward {self.reward}")
 
     def reward_speed(self):
-        if self.body.speed > 10 and self.body.direction == 1.0:
-            self.reward += 0.1
-        # self.reward += (self.body.speed - 50) / 100
+        # if self.body.speed > 10 and self.body.direction == 1.0:
+        #     self.reward += 0.1
+        self.reward += self.body.speed / 100
         # print(f"Speed reward {self.reward}")
 
     def get_state(self):

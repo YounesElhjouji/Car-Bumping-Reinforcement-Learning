@@ -1,4 +1,4 @@
-from utils.utils import get_world_size
+from game.utils.utils import get_world_size
 
 
 class World:

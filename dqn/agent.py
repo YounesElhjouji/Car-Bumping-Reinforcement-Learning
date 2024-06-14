@@ -6,12 +6,12 @@ from random import choice, randint
 import torch
 
 from entities.action import Action, State
-from pytorch.model import QNetModel, QNetTrainer
+from dqn.model import QNetModel, QNetTrainer
 
 MEMORY_SIZE = 10000
-BATCH_SIZE = 100
-LR = 0.001
-GAMMA = 0.9
+BATCH_SIZE = 1000
+LR = 0.0001
+GAMMA = 0.6
 
 
 class Agent:

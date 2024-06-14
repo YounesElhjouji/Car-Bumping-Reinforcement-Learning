@@ -1,5 +1,5 @@
 import itertools
-from car import Car
+from game.car import Car
 
 
 class CarCollection:

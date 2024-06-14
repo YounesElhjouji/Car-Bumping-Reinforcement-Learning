@@ -1,6 +1,6 @@
 from math import atan2, cos, degrees, sin, tan
 import itertools
-from car import Car
+from game.car import Car
 from entities.action import Action
 from entities.car_collection import CarCollection
 from entities.world import World
@@ -8,8 +8,8 @@ from entities.world import World
 import numpy as np
 
 from entities.body import Body
-from utils.geometry import Geometry
-from utils.sensing import SensingUtils
+from game.utils.geometry import Geometry
+from game.utils.sensing import SensingUtils
 
 drag_coefficient = 0.02
 friction_coefficient = 0.7

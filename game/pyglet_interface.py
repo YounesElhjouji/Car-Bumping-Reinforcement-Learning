@@ -5,12 +5,12 @@ from pyglet import gl
 from pyglet.graphics import Batch
 from pyglet.window import Window
 
-from car import Car
+from .car import Car
 from entities.enums import Player
 from entities.world import World
-from pytorch.agent import Agent
-from utils.pyglet import PygletUtils
-from utils.utils import get_world_size
+from dqn.agent import Agent
+from game.utils.pyglet import PygletUtils
+from game.utils.utils import get_world_size
 
 
 class PygletInterface:
@@ -24,7 +24,7 @@ class PygletInterface:
     window.push_handlers(key_handler)
 
     @classmethod
-    def start_game(cls, on_update: Callable):
+    def start_(cls, on_update: Callable):
         @cls.window.event
         def on_draw():
             cls.window.clear()

@@ -5,35 +5,17 @@ from random import randint
 from entities.car_collection import CarCollection
 from entities.enums import Player
 from entities.world import World
-from interfaces.pyglet_interface import PygletInterface, create_car
-import physics
-from pytorch.agent import Agent
-from utils.pyglet import PygletUtils
-from utils.sensing import SensingUtils
-from utils.shaper import ShapeUtils
-from controller import control_car
+from game.pyglet_interface import PygletInterface, create_car
+import game.physics as physics
+from dqn.agent import Agent
+from game.utils.pyglet import PygletUtils
+from game.utils.sensing import SensingUtils
+from game.utils.shaper import ShapeUtils
+from game.controller import control_car
 
 
-def add_cars() -> CarCollection:
-    cars = []
-    cars.append(create_car(position=[512, 300]))
-    # cars.append(create_car(position=[700, 300], rotation=90, player=Player.P2))
-    # for _ in range(15):
-    #     cars.append(
-    #         create_car(
-    #             position=[
-    #                 randint(20, World.size[0] - 20),
-    #                 randint(20, World.size[1] - 20),
-    #             ],
-    #             rotation=randint(0, 359),
-    #             player=Player.RANDOM,
-    #         )
-    #     )
-    return CarCollection(cars=cars)
-
-
-def old_game():
-    collection = add_cars()
+def old_():
+    collection= CarCollection(cars=[create_car(position=[512, 300])])
 
     def on_update(dt):
         for car in collection.cars:
@@ -52,41 +34,29 @@ def old_game():
             PygletUtils.draw_sensors(car=car, batch=PygletInterface.batch)
         # SensingUtils.debug_line_intersection(batch=PygletInterface.batch)
 
-    PygletInterface.start_game(on_update=on_update)
+    PygletInterface.start_(on_update=on_update)
 
 
 def train():
     cars = []
     archs = [
-        [8, 16, 9],
-        [8, 32, 9],
         [8, 64, 9],
         [8, 128, 9],
-        [8, 256, 9],
-        [8, 512, 9],
-        [8, 128, 32, 9],
-        [8, 9],
     ]
     scores = []
     gen = 0
-    batch_ids = []
     for arch in archs:
-        for i in range(2):
-            cars.append(
-                create_car(
-                    position=[
-                        randint(20, World.size[0] - 20),
-                        randint(20, World.size[1] - 20),
-                    ],
-                    rotation=randint(0, 359),
-                    player=Player.AI,
-                    agent=Agent(arch),
-                )
+        cars.append(
+            create_car(
+                position=[
+                    randint(20, World.size[0] - 20),
+                    randint(20, World.size[1] - 20),
+                ],
+                rotation=randint(0, 359),
+                player=Player.AI,
+                agent=Agent(arch),
             )
-            if i == 0:
-                batch_ids.append(cars[-1].id_)
-
-    # cars.append(create_car(position=[512, 300], agent=Agent([8, 8, 9])))
+        )
 
     # Initialize the plot
     fig, ax = plt.subplots()
@@ -95,7 +65,7 @@ def train():
         car.id_: ax.plot(
             [],
             [],
-            label=f"{car.agent.model.arch} {'nob' if car.id_ not in batch_ids else ''}",
+            label=f"{car.agent.model.arch}",
         )[0]
         for car in cars
     }
@@ -129,11 +99,8 @@ def train():
             for car in cars:
                 agent = car.agent
                 agent.n_games += 1
-                if car.id_ in batch_ids:
-                    agent.train_batch()
-
+                agent.train_batch()
                 agent.update_target_network()
-                update_plot()
                 car.score = 0
             print(f"Average scores: {scores}")
             World.current_time = 0
@@ -163,7 +130,7 @@ def train():
                 state0=state, state1=state_new, reward=reward, action=action, done=False
             )
 
-    PygletInterface.start_game(on_update=on_update)
+    PygletInterface.start_(on_update=on_update)
 
 
 if __name__ == "__main__":

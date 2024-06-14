@@ -1,13 +1,13 @@
 import numpy as np
 from pyglet.graphics import Batch
 
-from car import Car
+from game.car import Car
 from entities.car_collection import CarCollection
 from entities.rectangle import Rectangle
 from entities.sensor import Sensor
 from entities.world import World
-from utils.shaper import ShapeUtils
-from utils.geometry import Geometry
+from game.utils.shaper import ShapeUtils
+from game.utils.geometry import Geometry
 
 
 class SensingUtils:
