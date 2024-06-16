@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from bson import ObjectId
 from pyglet.sprite import Sprite
@@ -70,18 +71,32 @@ class Car(object):
             )
 
     def punish_wall_bump(self):
-        self.reward -= 10.0
+        self.reward -= 50.0
         # print(f"Touched the wall, reward {self.reward}")
 
     def reward_speed(self):
-        self.reward += (self.body.speed - 50) / 100
+        pass
+        # self.reward += (self.body.speed) / 100
+
+    def reward_position(self):
+        center_reward = (100 - np.linalg.norm(self.body.position - np.array(World.size)/2)) / 50
+        # print(f"Center reward {center_reward}")
+        self.reward += center_reward
 
     def get_state(self):
+        
+        radians = math.radians(self.body.rotation)
+        dx = math.cos(radians)
+        dy = math.sin(radians)
         return State(
             x=self.body.position[0] / World.size[0],
             y=self.body.position[1] / World.size[1],
             speed=self.body.speed / World.size[1],
             direction=self.body.direction,
+            dx=dx,
+            dy=dy,
+            vx=self.body.velocity[0] / World.size[1],
+            vy=self.body.velocity[1] / World.size[1],
             wall_sensors=[sensor.value for sensor in self.wall_sensors],
         )
 

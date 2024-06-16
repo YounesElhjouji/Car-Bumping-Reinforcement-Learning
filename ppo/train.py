@@ -18,6 +18,7 @@ from entities.action import (
 
 GENERATION = 0
 MODELS_PATH = join(os.getcwd(), 'models')
+HIGH_SCORE = -1000
 
 
 def initialize_cars(num_cars):
@@ -25,13 +26,14 @@ def initialize_cars(num_cars):
 
     for _ in range(num_cars):
         agent = PPOAgent(
-            input_dim=14, action_dim=5
+            input_dim=18, action_dim=5
         )  # Adjust input_dim to 8 and action_dim to 5
         agent.load_models(
             join(MODELS_PATH, "policy.pth"), join(MODELS_PATH, "value.pth")
         )
+        dist = 20
         car = create_car(
-            position=[randint(20, World.size[0] - 20), randint(20, World.size[1] - 20)],
+            position=[randint(dist, World.size[0] - dist), randint(dist, World.size[1] - dist)],
             rotation=randint(0, 359),
             player=Player.AI,
             agent=agent,
@@ -74,11 +76,20 @@ def handle_generation_end(cars, car_scores, ax, car_lines, memories):
 
 
 def save_best_scored_model(cars: list[Car]):
+    global HIGH_SCORE
     best_car = max(cars, key=lambda car: car.score)
-    best_car.agent.save_models(
-        join(MODELS_PATH, f"policy.pth"),
-        join(MODELS_PATH, f"value.pth"),
-    )
+    worst_car = min(cars, key=lambda car: car.score)
+    if (best_car.score > HIGH_SCORE):
+        HIGH_SCORE = best_car.score
+        best_car.agent.save_models(
+            join(MODELS_PATH, f"policy.pth"),
+            join(MODELS_PATH, f"value.pth"),
+        )
+    # elif best_car.score < 0.8 * HIGH_SCORE:
+    #     worst_car.agent.load_models(
+    #         join(MODELS_PATH, f"policy.pth"),
+    #         join(MODELS_PATH, f"value.pth"),
+    #     )
 
 def reset_world(cars):
     World.current_time = 0
@@ -124,7 +135,7 @@ def update_car_state(car, memory):
 
 
 def train():
-    num_cars = 3  # Set the number of cars
+    num_cars = 10  # Set the number of cars
     cars = initialize_cars(num_cars)
     memories = [Memory() for _ in range(num_cars)]
     fig, ax, car_lines = setup_plot(cars)
@@ -132,7 +143,7 @@ def train():
 
     def on_update(dt):
         World.current_time += dt
-        if World.current_time > 5:
+        if World.current_time > 20:
             handle_generation_end(cars, car_scores, ax, car_lines, memories)
             reset_world(cars)
 

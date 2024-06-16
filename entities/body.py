@@ -21,7 +21,7 @@ class Body:
         self.height = height
 
         self.direction = 1
-        self.rotation: float = rotation
+        self.rotation: float = rotation # in degrees
 
         self.thrust = 0.0
         self.steer = 0.0
@@ -61,6 +61,8 @@ class Body:
         )
 
     def reset_physics(self):
+        self.velocity = np.array([0.0, 0.0])
+        self.direction = 1
         self.thrust = 0.0
         self.steer = 0.0
         self.mass = 10

@@ -82,6 +82,7 @@ def move(car: Car):
     get_displacement(body, net_force)
     body.update_rectangles()
     car.reward_speed()
+    car.reward_position()
 
 
 def bump_border(car: Car):
