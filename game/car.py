@@ -2,12 +2,13 @@ import numpy as np
 from bson import ObjectId
 from pyglet.sprite import Sprite
 
-from entities.action import State
+from entities.state import State
 from entities.enums import Player
 from entities.body import Body
 from entities.sensor import Sensor
 from entities.world import World
-from dqn.agent import Agent
+from dqn.agent import QNetAgent
+from ppo.agent import PPOAgent
 
 
 class Car(object):
@@ -18,7 +19,7 @@ class Car(object):
         position: np.ndarray | None = None,
         rotation=80,
         player: Player = Player.P1,
-        agent: Agent | None = None,
+        agent: QNetAgent | PPOAgent | None = None,
     ):
         self.id_ = ObjectId()
         self.player = player
@@ -37,12 +38,12 @@ class Car(object):
         self.bumper_sensors = self.create_sensors()
         self.sensors: list[Sensor] = []
         self.reward = 0
-        self.agent = Agent([14, 9]) if agent is None else agent
+        self.agent = QNetAgent([14, 9]) if agent is None else agent
         self.score = 0
 
     def create_sensors(self) -> list[Sensor]:
         sensors: list[Sensor] = []
-        front_sensors, back_sensors = 2, 2
+        front_sensors, back_sensors = 7, 3
         for offset in np.linspace(-30, 30, front_sensors):
             sensors.append(
                 Sensor(
@@ -69,15 +70,11 @@ class Car(object):
             )
 
     def punish_wall_bump(self):
-        pass
-        # self.reward -= 1.0
+        self.reward -= 10.0
         # print(f"Touched the wall, reward {self.reward}")
 
     def reward_speed(self):
-        # if self.body.speed > 10 and self.body.direction == 1.0:
-        #     self.reward += 0.1
-        self.reward += self.body.speed / 100
-        # print(f"Speed reward {self.reward}")
+        self.reward += (self.body.speed - 50) / 100
 
     def get_state(self):
         return State(

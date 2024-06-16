@@ -8,7 +8,7 @@ from pyglet.window import Window
 from .car import Car
 from entities.enums import Player
 from entities.world import World
-from dqn.agent import Agent
+from dqn.agent import QNetAgent
 from game.utils.pyglet import PygletUtils
 from game.utils.utils import get_world_size
 
@@ -43,7 +43,7 @@ def create_car(
     position: list[int],
     rotation: int = 0,
     player: Player = Player.P1,
-    agent: Agent | None = None,
+    agent: QNetAgent | None = None,
 ) -> Car:
     batch = PygletInterface.batch
     car_sprite = PygletUtils.create_car_sprite(width=World.car_width, batch=batch)

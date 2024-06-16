@@ -7,7 +7,7 @@ from entities.enums import Player
 from entities.world import World
 from game.pyglet_interface import PygletInterface, create_car
 import game.physics as physics
-from dqn.agent import Agent
+from dqn.agent import QNetAgent
 from game.utils.pyglet import PygletUtils
 from game.utils.sensing import SensingUtils
 from game.utils.shaper import ShapeUtils

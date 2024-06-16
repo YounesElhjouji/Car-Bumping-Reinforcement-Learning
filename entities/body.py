@@ -59,3 +59,16 @@ class Body:
             width=self.width / 6,
             angle=self.rotation,
         )
+
+    def reset_physics(self):
+        self.thrust = 0.0
+        self.steer = 0.0
+        self.mass = 10
+        self.friction = self.mass * 9.81 * friction_coefficient
+        self.max_steer = 20.0
+
+        self.is_turbo = False
+        self.turbo_capacity = 40
+        self.turbo_cooldown = 4.0  # after each half second add a bit of fuel
+        self.turbo_last_fuel = 0.0
+        self.turbo_fuel = self.turbo_capacity

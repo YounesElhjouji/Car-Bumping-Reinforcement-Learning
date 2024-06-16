@@ -5,39 +5,44 @@ from random import choice, randint
 
 import torch
 
-from entities.action import Action, State
+from entities.action import OneHotAction
+from entities.state import State
 from dqn.model import QNetModel, QNetTrainer
 
 MEMORY_SIZE = 10000
 BATCH_SIZE = 1000
-LR = 0.0001
-GAMMA = 0.6
+LR = 0.01
+GAMMA = 0.95
 
 
-class Agent:
+class QNetAgent:
     def __init__(self, arch: list[int]) -> None:
         self.n_games = 0
         self.model = QNetModel(arch)
         self.target_model = QNetModel(arch)
         self.memory = deque(maxlen=MEMORY_SIZE)
-        print(self.model.layers)
         self.trainer = QNetTrainer(self.model, self.target_model, lr=LR, gamma=GAMMA)
 
-    def get_action(self, state: State) -> Action:
+    def get_action(self, state: State) -> OneHotAction:
         epsilon = max(5, 80 - self.n_games)
         if randint(0, 200) < epsilon:
-            action = choice(list(Action))
+            action = choice(list(OneHotAction))
             # print(f"Random action: {action}")
         else:
             state_tensor = torch.tensor(state.to_list(), dtype=torch.float)
             action_tensor = self.model(state_tensor)
             action_index = torch.argmax(action_tensor).item()
-            action = Action(action_index + 1)
+            action = OneHotAction(action_index + 1)
             # print(f"AI action: {action}")
         return action
 
     def train_step(
-        self, state0: State, state1: State, action: Action, reward: float, done: bool
+        self,
+        state0: State,
+        state1: State,
+        action: OneHotAction,
+        reward: float,
+        done: bool,
     ):
         state_old = np.array(state0.to_list())
         action_arr = np.array(action.to_list())

@@ -1,7 +1,7 @@
 from math import atan2, cos, degrees, sin, tan
 import itertools
 from game.car import Car
-from entities.action import Action
+from entities.action import MultiAction, OneHotAction
 from entities.car_collection import CarCollection
 from entities.world import World
 
@@ -27,17 +27,47 @@ def on_update(collection: CarCollection):
         refill_turbo(car.body)
 
 
-def update_car(car: Car, action: Action):
-    if action in [Action.NONE, Action.FORWARD, Action.BACKWARD]:
-        reverse_steer(car.body)
-    if action in [Action.FORWARD, Action.FORWARD_LEFT, Action.FORWARD_RIGHT]:
-        go_forward(car.body)
-    if action in [Action.BACKWARD, Action.BACKWARD_LEFT, Action.BACKWARD_RIGHT]:
-        go_backwards(car.body)
-    if action in [Action.LEFT, Action.FORWARD_LEFT, Action.BACKWARD_LEFT]:
-        turn_left(car.body)
-    if action in [Action.RIGHT, Action.FORWARD_RIGHT, Action.BACKWARD_RIGHT]:
-        turn_right(car.body)
+def update_car(car: Car, action: OneHotAction | MultiAction):
+    if isinstance(action, OneHotAction):
+        if action in [OneHotAction.NONE, OneHotAction.FORWARD, OneHotAction.BACKWARD]:
+            reverse_steer(car.body)
+        if action in [
+            OneHotAction.FORWARD,
+            OneHotAction.FORWARD_LEFT,
+            OneHotAction.FORWARD_RIGHT,
+        ]:
+            go_forward(car.body)
+        if action in [
+            OneHotAction.BACKWARD,
+            OneHotAction.BACKWARD_LEFT,
+            OneHotAction.BACKWARD_RIGHT,
+        ]:
+            go_backwards(car.body)
+        if action in [
+            OneHotAction.LEFT,
+            OneHotAction.FORWARD_LEFT,
+            OneHotAction.BACKWARD_LEFT,
+        ]:
+            turn_left(car.body)
+        if action in [
+            OneHotAction.RIGHT,
+            OneHotAction.FORWARD_RIGHT,
+            OneHotAction.BACKWARD_RIGHT,
+        ]:
+            turn_right(car.body)
+    else:
+        if action.forward and not action.backward:
+            go_forward(car.body)
+        if action.backward and not action.forward:
+            go_backwards(car.body)
+        if action.right and not action.left:
+            turn_right(car.body)
+        if action.left and not action.right:
+            turn_left(car.body)
+        # if action.turbo:
+        #     run_turbo(car.body)
+        # else:
+        #     cancel_turbo(car.body)
     move(car)
 
 

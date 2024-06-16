@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 
-class Action(Enum):
+class OneHotAction(Enum):
     NONE = auto()
     FORWARD = auto()
     BACKWARD = auto()
@@ -16,7 +16,7 @@ class Action(Enum):
     def to_list(self):
         """Convert an Action enum value to a one-hot list."""
         idx = self.value - 1  # Adjust index since `auto()` starts from 1
-        lst = [0] * len(Action)
+        lst = [0] * len(OneHotAction)
         lst[idx] = 1
         return lst
 
@@ -24,46 +24,43 @@ class Action(Enum):
     def from_list(lst):
         """Convert a one-hot list back to an Action enum value."""
         assert (
-            lst.count(1) == 1 and lst.count(0) == len(Action) - 1
+            lst.count(1) == 1 and lst.count(0) == len(OneHotAction) - 1
         ), "List must be one-hot encoded"
         index = lst.index(1) + 1  # Convert 0-based index to 1-based
-        return Action(index)
+        return OneHotAction(index)
 
 
 @dataclass
-class State:
-    x: float
-    y: float
-    speed: float
-    direction: float  # can be 1.0 or -1.0
-    wall_sensors: list[float]
+class MultiAction:
+    forward: bool
+    backward: bool
+    left: bool
+    right: bool
+    turbo: bool
 
     def to_list(self):
-        """Convert a State instance into a list including position, velocity, and wall sensors."""
-        return [self.x, self.y, self.speed, self.direction] + self.wall_sensors
+        return [self.forward, self.backward, self.left, self.right, self.turbo]
 
-    @staticmethod
-    def from_list(lst):
-        """Convert a list back into a State instance."""
-        x = lst[0]
-        y = lst[1]
-        speed = lst[2]
-        direction = lst[3]
-        wall_sensors = lst[4:]
-        return State(x, y, speed, direction, wall_sensors)
+    @classmethod
+    def from_list(cls, lst: list):
+        return cls(
+            forward=lst[0],
+            backward=lst[1],
+            left=lst[2],
+            right=lst[3],
+            turbo=lst[4],
+        )
 
 
 if __name__ == "__main__":
-    action = Action.FORWARD
+    action = OneHotAction.FORWARD
     action_list = action.to_list()
-    restored_action = Action.from_list(action_list)
+    restored_action = OneHotAction.from_list(action_list)
     print(f"Action: {action}, List: {action_list}, Restored Action: {restored_action}")
 
-    state = State(
-        x=1.0, y=2.0, speed=-0.5, direction=-1.0, wall_sensors=[0.1, 0.2, 0.3, 0.4]
+    action = MultiAction(
+        forward=True, backward=False, left=False, right=True, turbo=False
     )
-    state_list = state.to_list()
-    restored_state = State.from_list(state_list)
-    print(f"Original State: {state}")
-    print(f"List: {state_list}")
-    print(f"Restored State: {restored_state}")
+    action_list = action.to_list()
+    restored_action = MultiAction.from_list(action_list)
+    print(f"Action: {action}, List: {action_list}, Restored Action: {restored_action}")
