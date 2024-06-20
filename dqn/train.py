@@ -93,7 +93,7 @@ def update_car_state(car):
 
 
 def train():
-    archs = [[8, 64, 9], [8, 128, 9]]
+    archs = [[18, 64, 9], [18, 128, 9]]
     cars = initialize_cars(archs)
     fig, ax, car_lines = setup_plot(cars)
     car_scores = {car.id_: [] for car in cars}

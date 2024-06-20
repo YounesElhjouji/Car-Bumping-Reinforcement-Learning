@@ -6,20 +6,24 @@ import numpy as np
 
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_dim, action_dim, action_std_init):
+    def __init__(self, input_dim, action_dim, hidden_layers, action_std_init):
         super(PolicyNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64, action_dim)
+        self.hidden_layers = hidden_layers
+        self.layers = nn.ModuleList()
+        prev_dim = input_dim
+        for hidden_dim in hidden_layers:
+            self.layers.append(nn.Linear(prev_dim, hidden_dim))
+            self.layers.append(nn.Tanh())
+            prev_dim = hidden_dim
+        self.layers.append(nn.Linear(prev_dim, action_dim))
+        self.layers.append(nn.Tanh())
         self.action_dim = action_dim
-
         self.log_std = nn.Parameter(torch.ones(action_dim) * action_std_init)
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        mean = self.fc3(x)
-        return mean
+        for layer in self.layers:
+            x = layer(x)
+        return x
 
     def get_dist(self, x):
         mean = self.forward(x)
@@ -30,26 +34,32 @@ class PolicyNetwork(nn.Module):
 
 
 class ValueNetwork(nn.Module):
-    def __init__(self, input_dim):
+    def __init__(self, input_dim, hidden_layers):
         super(ValueNetwork, self).__init__()
-        self.fc1 = nn.Linear(input_dim, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64, 1)
+        self.hidden_layers = hidden_layers
+        self.layers = nn.ModuleList()
+        prev_dim = input_dim
+        for hidden_dim in hidden_layers:
+            self.layers.append(nn.Linear(prev_dim, hidden_dim))
+            self.layers.append(nn.Tanh())
+            prev_dim = hidden_dim
+        self.layers.append(nn.Linear(prev_dim, 1))
 
     def forward(self, x):
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        return self.fc3(x)
+        for layer in self.layers:
+            x = layer(x)
+        return x
 
 
 class PPOAgent:
     def __init__(
-        self, input_dim, action_dim, action_std_init=0.5, lr=3e-4, gamma=0.99, eps_clip=0.2, K_epochs=4
+        self, input_dim, action_dim, hidden_layers, action_std_init=0.5, lr=3e-4, gamma=0.99, eps_clip=0.2, K_epochs=15
     ):
-        self.policy = PolicyNetwork(input_dim, action_dim, action_std_init)
-        self.policy_old = PolicyNetwork(input_dim, action_dim, action_std_init)
+        self.hidden_layers = hidden_layers
+        self.policy = PolicyNetwork(input_dim, action_dim, hidden_layers, action_std_init)
+        self.policy_old = PolicyNetwork(input_dim, action_dim, hidden_layers, action_std_init)
         self.policy_old.load_state_dict(self.policy.state_dict())
-        self.value_function = ValueNetwork(input_dim)
+        self.value_function = ValueNetwork(input_dim, hidden_layers)
         self.optimizer_policy = optim.Adam(self.policy.parameters(), lr=lr)
         self.optimizer_value = optim.Adam(self.value_function.parameters(), lr=lr)
         self.gamma = gamma
@@ -96,7 +106,7 @@ class PPOAgent:
             )
             loss = (
                 -torch.min(surr1, surr2).mean()
-                + 0.5 * self.mse_loss(state_values, rewards)
+                + 0.8 * self.mse_loss(state_values, rewards)
                 - 0.01 * dist_entropy.mean()
             )
 

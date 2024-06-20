@@ -20,17 +20,35 @@ GENERATION = 0
 MODELS_PATH = join(os.getcwd(), 'models')
 HIGH_SCORE = -1000
 
+# Example architectures to test
+architectures = [
+    [64, 64],
+    [128, 128, 64],
+    [256, 128, 64],
+    [128, 128],
+    [256, 256],
+    [32, 32],
+    [64],
+    [32, 32, 32],
+    [128, 64, 32]
+]
+
 
 def initialize_cars(num_cars):
     cars = []
 
-    for _ in range(num_cars):
+    for i in range(num_cars):
+        arch = architectures[i % len(architectures)]
         agent = PPOAgent(
-            input_dim=18, action_dim=5
-        )  # Adjust input_dim to 8 and action_dim to 5
-        agent.load_models(
-            join(MODELS_PATH, "policy.pth"), join(MODELS_PATH, "value.pth")
+            input_dim=18, action_dim=5, hidden_layers=arch
         )
+        policy_path = join(MODELS_PATH, f"{arch}-policy.pth")
+        value_path = join(MODELS_PATH, f"{arch}-value.pth")
+        try:
+            agent.load_models(policy_path, value_path)
+        except FileNotFoundError:
+            print(f"Warning: Model files {policy_path} and {value_path} not found. Using initialized models.")
+
         dist = 20
         car = create_car(
             position=[randint(dist, World.size[0] - dist), randint(dist, World.size[1] - dist)],
@@ -44,7 +62,7 @@ def initialize_cars(num_cars):
 
 def setup_plot(cars):
     fig, ax = plt.subplots()
-    car_lines = {car.id_: ax.plot([], [], label=f"Car {i}")[0] for i, car in enumerate(cars)}
+    car_lines = {car.id_: ax.plot([], [], label=f"Car {i} {car.agent.hidden_layers}")[0] for i, car in enumerate(cars)}
     ax.legend()
     return fig, ax, car_lines
 
@@ -78,18 +96,13 @@ def handle_generation_end(cars, car_scores, ax, car_lines, memories):
 def save_best_scored_model(cars: list[Car]):
     global HIGH_SCORE
     best_car = max(cars, key=lambda car: car.score)
-    worst_car = min(cars, key=lambda car: car.score)
-    if (best_car.score > HIGH_SCORE):
+    if best_car.score > HIGH_SCORE:
         HIGH_SCORE = best_car.score
-        best_car.agent.save_models(
-            join(MODELS_PATH, f"policy.pth"),
-            join(MODELS_PATH, f"value.pth"),
-        )
-    # elif best_car.score < 0.8 * HIGH_SCORE:
-    #     worst_car.agent.load_models(
-    #         join(MODELS_PATH, f"policy.pth"),
-    #         join(MODELS_PATH, f"value.pth"),
-    #     )
+        arch = best_car.agent.policy.hidden_layers
+        policy_path = join(MODELS_PATH, f"{arch}-policy.pth")
+        value_path = join(MODELS_PATH, f"{arch}-value.pth")
+        best_car.agent.save_models(policy_path, value_path)
+
 
 def reset_world(cars):
     World.current_time = 0
@@ -103,7 +116,7 @@ def reset_world(cars):
 
 
 def action_to_multiaction(action_probs):
-    action_probs = action_probs > 0.5  # Convert probabilities to binary actions
+    action_probs = action_probs > 0.0  # Convert probabilities to binary actions
     return MultiAction.from_list(action_probs.tolist())
 
 
@@ -143,7 +156,7 @@ def train():
 
     def on_update(dt):
         World.current_time += dt
-        if World.current_time > 20:
+        if World.current_time > 3:
             handle_generation_end(cars, car_scores, ax, car_lines, memories)
             reset_world(cars)
 
