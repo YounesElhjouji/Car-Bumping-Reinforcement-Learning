@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import MultivariateNormal
-import numpy as np
 
 
 class PolicyNetwork(nn.Module):
@@ -53,11 +52,23 @@ class ValueNetwork(nn.Module):
 
 class PPOAgent:
     def __init__(
-        self, input_dim, action_dim, hidden_layers, action_std_init=0.5, lr=3e-4, gamma=0.99, eps_clip=0.2, K_epochs=15
+        self,
+        input_dim,
+        action_dim,
+        hidden_layers,
+        action_std_init=0.5,
+        lr=3e-4,
+        gamma=0.99,
+        eps_clip=0.2,
+        K_epochs=5,
     ):
         self.hidden_layers = hidden_layers
-        self.policy = PolicyNetwork(input_dim, action_dim, hidden_layers, action_std_init)
-        self.policy_old = PolicyNetwork(input_dim, action_dim, hidden_layers, action_std_init)
+        self.policy = PolicyNetwork(
+            input_dim, action_dim, hidden_layers, action_std_init
+        )
+        self.policy_old = PolicyNetwork(
+            input_dim, action_dim, hidden_layers, action_std_init
+        )
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.value_function = ValueNetwork(input_dim, hidden_layers)
         self.optimizer_policy = optim.Adam(self.policy.parameters(), lr=lr)
@@ -126,13 +137,13 @@ class PPOAgent:
     def save_models(self, policy_path, value_path):
         torch.save(self.policy.state_dict(), policy_path)
         torch.save(self.value_function.state_dict(), value_path)
-        print(f"Models saved to {policy_path} and {value_path}")
+        print(f"Models saved for {self.hidden_layers}")
 
     def load_models(self, policy_path, value_path):
         self.policy.load_state_dict(torch.load(policy_path))
         self.policy_old.load_state_dict(torch.load(policy_path))
         self.value_function.load_state_dict(torch.load(value_path))
-        print(f"Models loaded from {policy_path} and {value_path}")
+        print(f"Models loaded for {self.hidden_layers}")
 
 
 class Memory:

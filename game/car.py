@@ -1,4 +1,5 @@
 import math
+from random import randint
 import numpy as np
 from bson import ObjectId
 from pyglet.sprite import Sprite
@@ -41,6 +42,8 @@ class Car(object):
         self.reward = 0
         self.agent = QNetAgent([14, 9]) if agent is None else agent
         self.score = 0
+        self.touches_wall = False
+        self.last_reset = World.current_time
 
     def create_sensors(self) -> list[Sensor]:
         sensors: list[Sensor] = []
@@ -70,21 +73,32 @@ class Car(object):
                 position=self.body.car_rect.center, rotation=self.body.rotation
             )
 
-    def punish_wall_bump(self):
-        self.reward -= 50.0
-        # print(f"Touched the wall, reward {self.reward}")
+    def set_reward(self):
+        # Distance to wall reward
+        wall_distance_punishment = self.punish_wall_proximity(
+            self.body.car_rect.center, World.np_size
+        )
 
-    def reward_speed(self):
-        pass
-        # self.reward += (self.body.speed) / 100
+        # # Speed reward
+        # speed_reward = min(self.body.speed / 100, 2.0)
+        # adjusted_speed_reward = (1 + wall_distance_punishment) * speed_reward
 
-    def reward_position(self):
-        center_reward = (100 - np.linalg.norm(self.body.position - np.array(World.size)/2)) / 50
-        # print(f"Center reward {center_reward}")
-        self.reward += center_reward
+        # Wall bump penalty
+        wall_touch_punishment = -50.0 if self.touches_wall else 0.0
+
+        # total reward
+        self.reward = wall_distance_punishment + wall_touch_punishment
+        self.update_score()
+
+    @staticmethod
+    def punish_wall_proximity(position: np.ndarray, world_size: np.ndarray) -> float:
+        punishment = (np.abs(position - world_size / 2) - world_size / 4) / (
+            world_size / 2
+        )
+        punishment = np.clip(-punishment, a_min=-np.inf, a_max=0.0)
+        return punishment.sum()
 
     def get_state(self):
-        
         radians = math.radians(self.body.rotation)
         dx = math.cos(radians)
         dy = math.sin(radians)
@@ -105,3 +119,24 @@ class Car(object):
 
     def update_score(self):
         self.score = self.score + self.reward
+
+    def reset(self):
+        dist = 40
+        self.body.position = np.array(
+            [
+                randint(dist, World.size[0] - dist),
+                randint(dist, World.size[1] - dist),
+            ]
+        )
+        self.body.rotation = randint(0, 360)
+        self.body.reset_physics()
+        self.score = 0
+        self.touches_wall = False
+        self.last_reset = World.current_time
+
+
+if __name__ == "__main__":
+    size = [600, 420]
+    pos = [600, 0]
+    punishment = Car.punish_wall_proximity(np.array(pos), np.array(size))
+    print(punishment)
