@@ -72,6 +72,7 @@ def update_car(car: Car, action: OneHotAction | MultiAction):
 
 
 def move(car: Car):
+    car.touches_wall = False
     body = car.body
     body.max_steer = max(50 - 0.15 * body.speed, 5)
     bump_border(car)
@@ -81,8 +82,7 @@ def move(car: Car):
     net_force = get_net_force(body)
     get_displacement(body, net_force)
     body.update_rectangles()
-    car.reward_speed()
-    car.reward_position()
+    car.set_reward()
 
 
 def bump_border(car: Car):
@@ -90,7 +90,7 @@ def bump_border(car: Car):
     for wall in SensingUtils.get_wall_rectangles():
         is_collision, normal, depth = Geometry.are_colliding(body.car_rect, wall)
         if is_collision:
-            car.punish_wall_bump()
+            car.touches_wall = True
             bump_wall(body, normal, depth)
 
 

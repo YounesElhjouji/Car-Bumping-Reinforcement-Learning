@@ -5,6 +5,8 @@ from pyglet import gl
 from pyglet.graphics import Batch
 from pyglet.window import Window
 
+from ppo.agent import PPOAgent
+
 from .car import Car
 from entities.enums import Player
 from entities.world import World
@@ -43,7 +45,7 @@ def create_car(
     position: list[int],
     rotation: int = 0,
     player: Player = Player.P1,
-    agent: QNetAgent | None = None,
+    agent: QNetAgent | PPOAgent | None = None,
 ) -> Car:
     batch = PygletInterface.batch
     car_sprite = PygletUtils.create_car_sprite(width=World.car_width, batch=batch)
