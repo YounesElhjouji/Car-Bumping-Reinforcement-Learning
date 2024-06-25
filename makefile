@@ -1,4 +1,4 @@
 default: run
 export PYTHONPATH := $(shell pwd)
 run:
-	venv/bin/python ppo/train.py
+	venv/bin/python ppo/train.py --is-visual

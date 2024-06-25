@@ -1,6 +1,5 @@
 import argparse
 from random import randint
-import torch
 import os
 from os.path import join
 
@@ -9,7 +8,7 @@ from entities.world import World
 from game.car import Car
 from game.pyglet_interface import PygletInterface, create_car
 import game.physics as physics
-from ppo.agent import PPOAgent, Memory  # Importing PPO agent and Memory
+from ppo.agent import PPOAgent  # Importing PPO agent and Memory
 from game.utils.pyglet import PygletUtils
 from game.utils.sensing import SensingUtils
 from entities.action import (
@@ -34,10 +33,15 @@ architectures = [
 ]
 
 
-def initialize_cars(num_cars):
+def initialize_cars():
     cars = []
-
-    for i in range(num_cars):
+    dist = 40
+    position = [
+        randint(dist, World.size[0] - dist),
+        randint(dist, World.size[1] - dist),
+    ]
+    rotation = randint(0, 359)
+    for i in range(len(architectures)):
         arch = architectures[i % len(architectures)]
         agent = PPOAgent(input_dim=18, action_dim=5, hidden_layers=arch)
         policy_path = join(MODELS_PATH, f"{arch}-policy.pth")
@@ -49,13 +53,9 @@ def initialize_cars(num_cars):
                 f"Warning: Model files {policy_path} and {value_path} not found. Using initialized models."
             )
 
-        dist = 40
         car = create_car(
-            position=[
-                randint(dist, World.size[0] - dist),
-                randint(dist, World.size[1] - dist),
-            ],
-            rotation=randint(0, 359),
+            position=position,
+            rotation=rotation,
             player=Player.AI,
             agent=agent,
         )
@@ -64,40 +64,12 @@ def initialize_cars(num_cars):
     return cars
 
 
-def handle_exit_state(car: Car, memory: Memory):
-    assert isinstance(car.agent, PPOAgent)
-    print(
-        f"Car {str(car.id_)[-4:]}, Arch: {car.agent.hidden_layers}, Score/min: {car.score}"
-    )
-    save_best_scored_model(car)  # save_best_scored_model(car)
-    memory.is_terminals[-1] = True
-    car.agent.update(memory)
-    memory.clear_memory()
-    car.reset()
-
-
-def save_best_scored_model(car: Car):
-    assert isinstance(car.agent, PPOAgent)
-    if car.score >= HIGH_SCORES[car.id_]:
-        HIGH_SCORES[car.id_] = car.score
-        arch = car.agent.policy.hidden_layers
-        policy_path = join(MODELS_PATH, f"{arch}-policy.pth")
-        value_path = join(MODELS_PATH, f"{arch}-value.pth")
-        car.agent.save_models(policy_path, value_path)
-
-
-def reset_world(cars):
-    World.current_time = 0
-    for car in cars:
-        car.reset()
-
-
 def action_to_multiaction(action_probs):
     action_probs = action_probs > 0.0  # Convert probabilities to binary actions
     return MultiAction.from_list(action_probs.tolist())
 
 
-def update_car_state(car: Car, memory: Memory):
+def update_car_state(car: Car):
     assert isinstance(car.agent, PPOAgent)
     car.reward = 0
     agent = car.agent
@@ -112,33 +84,36 @@ def update_car_state(car: Car, memory: Memory):
     PygletUtils.set_car_sprite_position(car)
     PygletUtils.set_fire_position(car)
     SensingUtils.sense_walls(car, batch=PygletInterface.batch)
-    reward = car.reward
-
-    # Save in memory
-    memory.states.append(torch.FloatTensor(state))
-    memory.actions.append(torch.FloatTensor(action))
-    memory.action_probs.append(action_logprobs)
-    memory.rewards.append(reward)
-    memory.is_terminals.append(False)
 
 
-def train(is_visual: bool):
-    num_cars = 10  # Set the number of cars
-    cars: list[Car] = initialize_cars(num_cars)
-    memories = [Memory() for _ in range(num_cars)]
+def show_scores(cars: list[Car]):
+    cars.sort(key=lambda car: car.score)
+    output = ""
+    for car in cars:
+        output += f"Car {car.agent.hidden_layers}; Score: {car.score}\n"
+    print(output)
+    with open(join(MODELS_PATH, "test_results.txt"), "w") as f:
+        f.write(output)
+
+
+def test(is_visual: bool):
+    cars: list[Car] = initialize_cars()
+    is_running = True
 
     def on_update(dt):
+        nonlocal is_running
         World.current_time += dt
-        for car, memory in zip(cars, memories):
-            update_car_state(car, memory)
-            lifetime = World.current_time - car.last_reset
-            if lifetime > 10:
-                handle_exit_state(car, memory)
+        for car in cars:
+            update_car_state(car)
+        if World.current_time > 60:
+            show_scores(cars)
+            PygletInterface.end_()
+            is_running = False
 
     if is_visual:
         PygletInterface.start_(on_update=on_update)
     else:
-        while True:
+        while is_running:
             on_update(dt=World.dt)
 
 
@@ -151,4 +126,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    train(args.is_visual)
+    test(args.is_visual)

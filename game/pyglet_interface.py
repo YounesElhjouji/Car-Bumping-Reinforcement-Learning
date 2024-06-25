@@ -40,6 +40,10 @@ class PygletInterface:
         pyglet.clock.schedule_interval(update, World.dt)
         pyglet.app.run()
 
+    @classmethod
+    def end_(cls):
+        pyglet.app.exit()
+
 
 def create_car(
     position: list[int],
